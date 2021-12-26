@@ -18,11 +18,6 @@ use timer::{Guard, Timer};
 pub struct RadiantController<'a> {
     ctrl_chan_rx: tokio::sync::mpsc::UnboundedReceiver<StateMessage>,
     ctrl_chan_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
-
-    // bootstrap_rx: tokio::sync::mpsc::UnboundedReceiver<BeaconResponse>,
-    // bootstrap_tx: tokio::sync::mpsc::UnboundedSender<BeaconResponse>,
-
-    //  guard: Option<Guard>,
     _lifetime: std::marker::PhantomData<&'a ()>,
     pub radiant: Arc<Mutex<RadiantNode<RadiantOrder, RadiantMembership, RadiantSystem>>>,
     pub rpc_clients: RadiantRPCClientHandler,
@@ -43,7 +38,6 @@ impl RadiantController<'static> {
         ctrl_chan_rx: tokio::sync::mpsc::UnboundedReceiver<StateMessage>,
         ctrl_chan_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
         radiant: Arc<Mutex<RadiantNode<RadiantOrder, RadiantMembership, RadiantSystem>>>,
-        //  bootstrap_tx: tokio::sync::mpsc::UnboundedSender<BeaconResponse>
     ) -> Self {
         Self {
             ctrl_chan_rx,

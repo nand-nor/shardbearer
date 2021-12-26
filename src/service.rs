@@ -80,7 +80,6 @@ pub async fn radiant_server(toml: &str) -> Result<(), Box<dyn std::error::Error>
         Arc::new(Mutex::new(shard_map)),
         cfg.clone(),
         tx,
-        //rx,
     );
     let controller_node = Arc::clone(&arc_node);
     let map_clone = instance.share_map();
@@ -101,7 +100,6 @@ pub async fn radiant_server(toml: &str) -> Result<(), Box<dyn std::error::Error>
 
     rctrl
         .run(
-            //bootstrap_rx, bootstrap_tx,
             cfg,
         )
         .await;
@@ -109,23 +107,7 @@ pub async fn radiant_server(toml: &str) -> Result<(), Box<dyn std::error::Error>
     for (host, port) in server.bind_addrs() {
         info!("listening on {}:{}", host, port);
     }
-    /*
-      tokio::spawn(async move {
-          //  loop {
-          tracing::trace!("Waiting to drop");
 
-          match rx.recv().await {
-              Some(v) => {
-                  tracing::trace!("got = {:?}", v);
-                  drop(g);
-                  //   break;
-              }
-              None => tracing::trace!("the sender dropped"),
-          };
-          //   break;
-          //}
-      }); //.await;
-    */
     let (tx_break, rx) = oneshot::channel();
     tokio::spawn(async move {
         info!("Press ENTER to exit...");
