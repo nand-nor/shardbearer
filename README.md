@@ -1,5 +1,7 @@
 # Shardbearer: Sharded Storage Service
 
+:warning:!:warning:! :construction: THIS IS A WIP! :construction: !:warning:!:warning:
+
 A for-fun-and-learning project where I attempt to build a distributed sharded storage service using the `raft` consensus algorithm.
 For the problem specification I am using this [distributed systems course 
 final lab](https://pdos.csail.mit.edu/6.824/labs/lab-shard.html) framework. (Note: Im not enrolled in the course, I 
@@ -51,14 +53,6 @@ elected from the available `heralds` and any `herald` is compiled with the code 
 Furthermore, any `radiant` at any time can become a `herald`, so any `radiant` can take on the controller role as long
 as it has first taken on the `herald` role.  
 
-The goal being to avoid creating a system that has any single point of failure by enabling 
-
-
-
-Each replica group leader 
-additionally votes to elect a top level `shard` controller `herald`. 
-
-
 #### Increase System Autonomy
 
 To increase the system's ability to execute more autonomously, I have attempted to remove the need for any
@@ -80,8 +74,6 @@ at least one other cluster member
 
 Generally I have ignored any specification that seems to be purely for enabling automated testing/grading of the lab. 
 Things that made sense for general system testing/integration have been kept. 
-
-
 
 ### Capabilities and Limitations 
 
@@ -116,8 +108,9 @@ experimentation
 The following sub-crates are part of the `shardbearer` crate/build system:
 - `shardbearer-proto`
 - `shardbearer-core`
+- `shardbearer`
 
-Maybe more to come, TBD!
+Maybe more to come, TBD! TODO describe whats in each
 
 The main components giving structure to this system are `shards`, `radiants`, `orders`, and `heralds`. 
 
@@ -178,96 +171,14 @@ A `shard` controller `herald` is a radiant that belongs to an order but that has
 to serve as the elected coordinator for all `shards` across all `orders`  
 
 So the relation `R` between `radiants` and `heralds` is transitive, non-reflexive, and non-symmetric (does this matter). 
- An interesting thing in Rust is the notion of variance and supertypes/subtypes. 
+ An interesting thing in Rust is the notion of variance and supertypes/subtypes so trying to play around with that. 
 
-
-### Execution flow
-
-A server is loaded with a `radiant` binary compiled with the appropriate types for the key-value store. 
-Use the *.service definition to set up the binary to load & run at
- a specific time as part of something like `systemd`. 
- 
- Upon entry, it reads a toml config file to parse the following 
-```- port
-- ip address
-- name
-- permissions
-- heartbeat interval
-- beacon interval
-- initial beacon ip address of -at least one other node in the system- 
-- initial election seed?
-- what else?
-```
-It then starts to send out a beacon handshake message at `beacon interval` to it's assigned beacon IP address, and then waits for a 
-beacon response. `BeaconHandshake` sending some metadata to the neighbor (TBD but might include ip/port)
-Upon success, will receive a `BeaconResponse` that will assign the joiner with a temporary member ID and the
-joiner will temporarily be added to the group that the neighbor belongs to (if one exists).
-
-The beacon response is then followed up by an explicit `JoinSystem` RPC, which is relayed up to the top level
-controller, and upon success the current system state and membership information is exchanged. 
-So, a system admin can directly add a new `radiant` via direct call to the controller, or a `radiant` 
-
-
-
-Each `radiant` maintains a lookup table to store the address of every other `radiant` it receives a beacon or
-other message from. Each `radiant` also maintains basic information regarding the current `order` it belongs to in
-the current configuration, storing the set of `radiants` in it's own `order` (replica group) and the `shards` it's
-`order` is currently responsible for serving. Each `radiant` holds the information needed to become a `herald` of
-it's own `order` at any time, in case the `order's` `herald` goes offline for any reason, any `radiant` within the `order`
-can be elected to act as `herald`. 
-to hold the information that `radints` share with eachother i.e. a `radiant` can query another `radiant` to
-share the addresses it currently has stored
-
-The following scenarios are handled: 
-
-- Everyone is new: this is the first instance of the system and no `orders` have been established and no `heralds` 
-nor a `shard` controller have yet been elected. The beacon response indicates that this is the current state of the 
-system (at least from the point of view of the responder). 
-This requires that, as part of the config, initial beacon ip addresses are assigned to each node in the system
-such that the specific configuration parameter invariants hold. For more details see the 
-[Assigning Configuration Parameters](#assigning-configuration-parameters)'s
-subsection [Association Graph Invariants](#association-graph-invariants).
-
-- Multiple new nodes join an established system 
-A system is considered "established" when the following states are met: the system has least 2 nodes currently running,
- they have passed the beacon phase & established handshakes, & all roles have been elected and voted on.
-
-Possible enhancement: When the number of new nodes joining a pre-established system doubles the total nodes in the system,
-all `orders` are re-organized and existing roles are relinquished so new `heralds` and a `shard` controlling `herald`
-are voted on and established.   
-  
--A single new node joins an established system. 
-
-The initial beacon emission and beach response is an RPC call. 
-
-## Maintaining State
-
-Each `radiant` maintains the following state information:
-- basic self-state information (current role, disk space used/free, add more later)
-- current configuration of `shards` the `order` the `radiant` belongs to is responsible for
-- current `order` id
-- current `order` membership e.g. addresses of all `radiants` in the `order` (replica group)
-- current `order` elected `herald`
-- list of `orders` in the system and their associated `herald`
-- the `shard` controlling `herald`
-
-- Possibly also a lookup table to store the address of every other `radiant` known to exist in the system, currently
-
-Each `radiant` also maintains basic information regarding the current `order` it belongs to in
-the current configuration, storing the set of `radiants` in it's own `order` (replica group) and the `shards` it's
-`order` is currently responsible for serving. 
-
-Each `radiant` holds the information needed to become a `herald` of it's own `order` at any time, in case the
- `order's` currently elected `herald` goes offline for any reason, any `radiant` within the `order`
-can be elected to act as `herald`. 
-
-
-## Assigning Configuration Parameters
+### Assigning Configuration Parameters
 
 Each binary produced (by default in the basic `radiant` state) must be provided with a set of parameters as a
 toml file to be parsed at runtime. 
 
-### Association Graph Invariants
+#### Association Graph Invariants
 
 
 The association graph must hold the following invariants:
