@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+import "common.proto";
+
+// Interface exported by the server.
+service Herald {
+  rpc HeraldVote(Radiant)returns (Roles){}
+}

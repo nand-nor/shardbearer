@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+
+import "common.proto";
+
+service RadiantNode {
+    rpc BeaconHandshake (Beacon) returns (BeaconResponse) {}
+    rpc JoinSystem(Radiant)returns (ConfigSummary){}
+    rpc LeaveSystem(Radiant)returns (ConfigSummary){}
+
+    rpc RadiantVote(Radiant)returns (Role){}
+
+    rpc CurrentRoles(Controller)returns(Roles){}
+
+    rpc MoveShardRequest(ShardMoveRequest) returns (ShardMoveRequestResponse){}
+}

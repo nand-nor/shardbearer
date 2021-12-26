@@ -1,0 +1,6 @@
+
+my_ip= "127.0.0.1"
+my_port= 50051
+neighbor_ip= "127.0.0.1"
+neighbor_port= 30031
+bootstrap_backoff = 150

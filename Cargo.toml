@@ -1,0 +1,47 @@
+[package]
+name = "shardbearer"
+version = "0.1.0"
+authors = ["nand-nor <a13xandra.cliff0rd@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+grpcio = { version = "0.9"}#, default-features = false, features = ["protobuf-codec"] }
+futures = "0.3"
+shardbearer-core = { path = "shardbearer-core", version = "0.1.0"}
+shardbearer-proto = { path = "shardbearer-proto", version = "0.1.0"}
+protobuf = { version = "2.0", optional = true }
+tracing = "0.1"
+tracing-subscriber = "0.2"
+tokio = { version = "1.14.0", features = ["full"] }
+indexmap = "1.7.0"
+raft = "0.4.3"
+toml = "0.5.8"
+serde = {version="1.0", features=["derive"]}
+serde_json = "1.0.61"
+
+rand = "0.8.4"
+timer = "0.2.0"
+chrono = "0.4.19"
+
+[features]
+default=["herald"]
+herald = []
+client = []
+
+[[example]]
+name="herald_server"
+path="examples/herald/server.rs"
+#[[example]]
+#name="herald_client"
+#path="examples/herald/client.rs"
+[[example]]
+name="radiant_server"
+path="examples/radiant/server.rs"
+[[example]]
+name="radiant_client"
+path="examples/radiant/client.rs"
+
+[workspace]
+members = [ "shardbearer-proto", "shardbearer-core", "shardbearer-shardkv","." ]
