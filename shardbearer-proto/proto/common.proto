@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+
+// A ConfigSummary is received in response to a Join rpc.
+message ConfigSummary {
+  // config id
+    uint64 cid = 1;
+    repeated Order orders = 2;
+}
+
+message Radiants {
+    //must match the type used elsewhere for GroupID
+    uint64 gid = 1;
+    repeated Radiant radiants = 2;
+}
+
+message Radiant {
+    uint64 mid = 1;
+    string ip = 2;
+    uint32 port = 3;
+}
+
+message JoinGroup {
+    repeated Radiants groups = 1;
+}
+
+message LeaveGroup{
+    repeated Order orders = 1;
+}
+
+
+message Order {
+    uint64 gid = 1;
+    repeated Shard shards = 2;
+    repeated Radiant members = 3;
+}
+
+
+message Shard {
+  uint64 sid = 1;
+  int64 first_key = 2;
+  int64 last_key = 3;
+}
+
+message ConfigId{
+    uint64 cid = 1;
+}
+
+
+//Use with chrono to generate system time
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+
+message ShardMove {
+    uint64 sid = 1;
+    uint64 gid = 2;
+
+}
+
+message Beacon {
+   uint64 mid = 1;
+}
+
+message BeaconResponse {
+   uint64 gid = 1;
+   uint64 mid = 2;
+   Radiant neighbor = 3;
+   HeraldInfo hid = 4;
+   uint32 cluster_state = 5;
+   bool join_success = 6;
+}
+
+message HeraldInfo {
+    uint64 gid = 1;  //herald's grop ID
+    uint64 mid = 2;  //heralds member id within hte group
+    uint64 hid = 3;  //herald's ID within the herald group
+    string ip = 4;   //the IP to contact the herald
+    uint32 port = 5;  //the port to send the request to
+}
+
+message HeraldClient {
+  string ip = 1;   //the IP to contact the herald
+    uint32 port = 2;  //the port to send the request to
+}
+
+message RadiantClient {
+  string ip = 1;   //the IP to contact the herald
+    uint32 port = 2;  //the port to send the request to
+}
+
+
+
+message Role {
+    uint64 gid = 1;  //group id
+    uint64 mid = 2;  //id in the group
+    uint64 rid = 3; //role in the group
+}
+
+message Roles {
+    repeated Role roles = 1;
+}
+
+message Controller {
+    uint64 cid = 1;
+}
+
+message ShardMoveRequest {
+     uint64 sid = 1;    //the ID of the shard
+     string ip = 2;     //the ip the sender will be sending from (for verification)
+     uint32 port = 3;   //the port the sender will be sending from (for verification)
+     uint64 size = 4;   //the size in bytes of the shard (so the receiver can check that there is enough space)
+     string key_type = 5;                   //describe the key data type
+     string value_type = 6;                 //describe the value data type
+}
+
+
+
+message ShardMoveRequestResponse {
+     bool result = 1;    //if the move can proceed
+     string ip = 2;     //the ip the receiver will receive from (for verification)
+     uint32 port = 3;   //the port the receiver will be receiving from (for verification)
+}

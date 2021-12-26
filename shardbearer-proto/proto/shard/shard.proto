@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+
+// Interface exported by the server.
+service Shard {
+    rpc SayHi(HiRequest) returns (HiReply) {}
+  }
+
+  // The request message containing the user's name.
+  message HiRequest {
+    string name = 1;
+  }
+
+  // The response message containing the greetings
+  message HiReply {
+    string message = 1;
+  }
