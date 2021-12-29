@@ -6,6 +6,12 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
+
+pub const RUNTIME_DEF_NUM_THREADS: usize = 1;
+pub const RUNTIME_DEF_THREADSTACK: usize = 65536;
+pub const RUNTIME_DEF_NAME: &str = "radiant";
+
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShardbearerConfig {
     my_ip: String,
@@ -14,6 +20,8 @@ pub struct ShardbearerConfig {
     neighbor_port: u16,
     bootstrap_backoff: u64,
     raftcfg: RaftCfg,
+    runtime: Option<RuntimeCfg>,
+
 }
 
 impl ShardbearerConfig {
@@ -37,6 +45,12 @@ impl ShardbearerConfig {
     pub fn raft_cfg(&self) -> Config {
         self.raftcfg.as_cfg()
     }
+    pub fn runtime_cfg(&self) -> RuntimeCfg {
+        if let Some(rt) = &self.runtime{
+           return rt.clone()
+        }
+        RuntimeCfg::default_build()
+    }
 
     pub fn id(&self) -> MemberID {
         self.raftcfg.id()
@@ -52,18 +66,41 @@ impl ShardbearerConfig {
     }
 }
 
-//#[derive(Serialize, Deserialize)]
-//pub struct NeighborConfig{
 
-//}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RuntimeCfg {
+    num_threads: usize,
+    thread_stack_size: usize,
+    runtime_name: String,
+}
+
+impl RuntimeCfg {
+    pub fn default_build()->Self{
+        Self{
+            num_threads: RUNTIME_DEF_NUM_THREADS,
+            thread_stack_size: RUNTIME_DEF_THREADSTACK,
+            runtime_name: RUNTIME_DEF_NAME.to_string(),
+        }
+    }
+    pub fn num_threads(&self)-> usize{
+        self.num_threads
+    }
+    pub fn thread_stack_size(&self)->usize{
+        self.thread_stack_size
+    }
+    pub fn runtime_name(&self) ->String{
+        self.runtime_name.clone()
+    }
+
+}
 
 pub fn parse_cfg(file: &str) -> Result<ShardbearerConfig, Box<dyn Error>> {
     let mut fp = match File::open(file) {
         Err(why) => {
-            println!(
+            tracing::error!(
                 "Could not open provided toml: {}: {}",
                 file,
-                why.description()
+                why.to_string()
             );
             return Err(Box::new(why));
         }
@@ -74,6 +111,6 @@ pub fn parse_cfg(file: &str) -> Result<ShardbearerConfig, Box<dyn Error>> {
     fp.read_to_end(&mut ops)?;
 
     let cfg = toml::from_slice(&ops)?;
-    println!("CONFIG!: {:?}", cfg);
+    tracing::info!("Pulled ShardbearerConfig!: {:?}", cfg);
     Ok(cfg)
 }

@@ -45,19 +45,29 @@ client_tests = []
 
 [[example]]
 name="herald_server"
-path="examples/herald/server.rs"
+path="examples-and-tests/herald/server.rs"
 
 #[[example]]
 #name="testclient"
-#path="examples/test_clients/rpc_handler_cli.rs"
+#path="examples-and-tests/test_clients/rpc_handler_cli.rs"
 #features=["client_tests"]
+
+
+[[example]]
+name="custom_ep_simple"
+path="examples-and-tests/custom-entrypoint/server.rs"
+
+[[example]]
+name="custom_ep_default_rt"
+path="examples-and-tests/custom-entrypoint/server_default_rt.rs"
+
 
 [[example]]
 name="radiant_server"
-path="examples/radiant/server.rs"
+path="examples-and-tests/radiant/server.rs"
 [[example]]
 name="radiant_client"
-path="examples/radiant/client.rs"
+path="examples-and-tests/radiant/client.rs"
 
 [workspace]
 members = [ "shardbearer-proto", "shardbearer-core", "shardbearer-shardkv","." ]

@@ -16,15 +16,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut client = RadiantRpcClient::new(channel);
 
-    perform_handshake(&client).await?;
+   // perform_handshake(&client).await?;
 
-    let mut other_clients: RadiantRpcClientHandler = RadiantRpcClientHandler::new();
-    #[cfg(feature = "client_tests")]
-    tests::check_rpc_cli_tests(&mut other_clients);
+   // let mut other_clients: RadiantRpcClientHandler = RadiantRpcClientHandler::new();
+    //#[cfg(feature = "client_tests")]
+   // tests::check_rpc_cli_tests(&mut other_clients);
 
     Ok(())
 }
 
+/*
 #[cfg(feature = "client_tests")]
 mod tests {
     use super::RadiantRpcClientHandler;
@@ -55,3 +56,4 @@ async fn perform_handshake(client: &RadiantRpcClient) -> Result<(), Box<dyn std:
 
     Ok(())
 }
+*/

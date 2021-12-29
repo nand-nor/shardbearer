@@ -85,6 +85,7 @@ impl RaftNode {
          let logger = slog::Logger::root(drain, o!());
 
         */
+
         /*
          let mut snapshot = Snapshot::default();
 

@@ -9,3 +9,7 @@ id = 1
 election_timeout= 10
 heartbeat_interval = 2
 replication_max_bytes = 1024
+[runtime]
+num_threads= 10
+thread_stack_size= 65536
+runtime_name = "radiantserver1"
