@@ -13,3 +13,16 @@ any major disruption in service or significant downtime taken to recreate previo
  actual `shard` data storage object. This is effectively meant to be a shallow copy of the data the `order`
  is responsible for, for `herald` reporting purposes / interaction with the `shard` controller `herald`
  
+ 
+ 
+ Order states:
+ INACTIVE
+ VOTING
+ ACTIVE
+ RESETLOCK
+ ERROR
+ 
+ 
+ voting and resetlock states are lock states. Until the system state changes no new node can enter the system,
+ request system info, make a change, etc. It is up to individual nodes to repeat requests as often as needed
+ if their requests are denied during these states. Possibly need to add in a RetryLast state?

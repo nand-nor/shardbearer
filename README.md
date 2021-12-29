@@ -33,44 +33,42 @@ see the next section [departures from the problem spec section](#departures-from
 
 I have made a few changes/optimizations to make the system a bit more interesting (in my humble opinion). One challenge
 I see to systems like these is ensuring fault tolerance and recoverability while still maintaining some level of
-decentralization.  Another interesting
-feature I want this system to have is autonomy. So increasing decentralization and enabling more advanced autonomous
-operation are the two main departures from the problem spec. 
+decentralization.  
+
+Another interesting feature I want this system to have is autonomy. So increasing decentralization and enabling 
+more advanced autonomous operation are the two main departures from the problem spec. 
 
 #### Increase Decentralization
 
+I have attempted to add logic to enable the system to recover from cases where nodes experience system failure in
+ an unplanned-for manner. Nodes can explicitly leave the system, for example if there is some fault detected that
+requires the node to either restart the service or restart the entire server. Nodes can also go down without
+any notice to the rest of the cluster; `heralds` have functionality to periodically poll the `radiant` members of
+the `order` for which they are responsible, and `heralds` can also poll each other. 
+The logic I have attempted to add is intended to enable any server at any time to take 
+on any role in the system depending on these polling operations. 
 
-Similarly, I have added implementations to enable the system to
-recover from cases where nodes experience system failure in an unplanned-for manner. Nodes can explicitly leave
-the system, for example if there is some fault detected that requires the node to either restart the service or 
-restart the entire server. Additionally, `heralds` have functionality to periodically poll the `radiant` members of
-the `order` for which they are responsible, 
-
- 
- is that I have implemented the code so that any server at any time can take 
-on any role in the system. This means that there is no separate `shard` controller service: a `shard` controller is 
+This means that there is no separate `shard` controller service: a `shard` controller is 
 elected from the available `heralds` and any `herald` is compiled with the code needed to execute that role. 
 Furthermore, any `radiant` at any time can become a `herald`, so any `radiant` can take on the controller role as long
-as it has first taken on the `herald` role.  
+as it has first taken on the `herald` role. 
 
 #### Increase System Autonomy
 
 To increase the system's ability to execute more autonomously, I have attempted to remove the need for any
-human input, like that from a sysdmin. 
-
-A new node in the system can be added without input from a 3rd party (such as a system administrator) as long as it
-has the address of at least one other node in the system. As part of the runtime configuration file provided to
-a `radiant`, the address of another member of the system must be included. This address will be used for system
- association, and the overall system association graph must meet the requirements/ specified invariants 
-listed in the  [Association Graph Invariants](#association-graph-invariants). This address will be used to enter the system
-via a series of RPCs sent throughout the system. 
+human input. A new node in the system can be added without input from a 3rd party (such as a system administrator) 
+as long as it has the address of at least one other node in the system. As part of the runtime configuration file 
+provided to a `radiant`, the address of another member of the system must be included. This address will be used 
+for system association, and the overall system association graph must meet the requirements/ specified invariants 
+listed in the  [Association Graph Invariants](#association-graph-invariants). This address will be used to enter
+the system via a series of RPCs sent throughout the system. 
 
 The functionality required to enable outside-system input (via human sysadmin or otherwise) is also retained to enable 
 the add/remove actions for `radiant` nodes. This is done for testability and also as a failsafe (no system that is 
 fully autonomous should run without some kind of killswitch)
 
 A system of at least two nodes can bootstrap itself (ideally) just from being able to send an RPC to
-at least one other cluster member
+at least one other cluster member. 
 
 Generally I have ignored any specification that seems to be purely for enabling automated testing/grading of the lab. 
 Things that made sense for general system testing/integration have been kept. 
@@ -86,29 +84,22 @@ on the end-user's needs. TODO keys must be fixed but values can possibly be dyna
 The system supports any number of nodes in the system greater than 2 but less than some large number (need to test this) 
 as a function of the memory required to maintain the state needed to track membership etc. 
 
-The system assumes that all nodes in the cluster will be running a linux based distro that supports `tc`!
+The system assumes that all nodes in the cluster will be running a linux based distro that supports `tc`! For when
+the system is ready for some custom `qdisc` classifiers (this is a long way off)
 
 #### Limitations
 
-There are lots of limitations as this is just a for-fun project that I am using to teach myself some distibuted
-system theory and work on build `async` Rust skills. 
-TODO comprehensive list
-
-#### Optional features and future work 
-
- At some point this repo will provide a simple `ebpf`-based `qdisc` classifier for ingress that 
-can be loaded into `tc` to provide somewhat better performance/security to whitelist only approved
-subnets. And at a later point an egress classifier to help with routing within the cluster in a semi-ordered fashion
-(assigning higher priority to egress packets marked for replicating `shard` data, for example). This will need some
-experimentation
-
-~~It also utilizes Rust's conditional compilation system to provide optional build features that add more~~
+There are lots of limitations as this is just a for-fun project that I am using to teach myself some distributed
+system theory and work on build `async` Rust skills. Lots of things discussed in this README are under development
+even though the wording may sound like the system does these things already. 
+TODO comprehensive list of limitations
 
 ### Code Organization / Architecture
 The following sub-crates are part of the `shardbearer` crate/build system:
-- `shardbearer-proto`
-- `shardbearer-core`
-- `shardbearer`
+- `shardbearer-proto` where the protocol buffer definitions are generated
+- `shardbearer-core`  where all of the traits are defined
+- `shardbearer` pulls together the protos,  traits, and everything else to define the needed services
+- `shardbearer-shardkv` (currently empty)
 
 Maybe more to come, TBD! TODO describe whats in each
 
@@ -180,7 +171,6 @@ toml file to be parsed at runtime.
 
 #### Association Graph Invariants
 
-
 The association graph must hold the following invariants:
 
 - edges are directed 
@@ -195,37 +185,43 @@ but no node can point to itself. The case where a `radiant` node has `0` inciden
 existence and therefore no edges from the existing `radiant` nodes will be incident to it. 
 - holding with the above, the degree (in-degree + out-degree) of any given node in the graph must at all times 
 be at least 1 but no greater than `(n-1)*2`.
-- Also following the above, the graph can be cyclic (TODO this may be too permissive, need to consider pros/cons)
+- Also following the above, the graph can be cyclic
 
 ## Dependencies
 
-This service will largely rely on the `gRPC-rs` framework, `tokio-rs`, and `async-raft` 
+This service will largely rely on the `gRPC-rs` framework, `tokio-rs`, and `async-raft`  or maybe just `raft` TDB.
 
 All interactions between nodes in the system and between client and system utilize `gRPC-rs`. 
 
 This crate leverages `tokio-rs` to provide asynchronous execution and configurable levels of tracing/logging.  
 
-
-## Performance Tuning
-
-This system can possibly benefit from individual nodes loading custom `qdisc` implementations for ingress/egress
-
-
-## TO DO
+## TO DO / Future Work
 
 - Add in more security features for RPC (tls?) using `cfg` macros
 - Utilize `cargo bench` to profile individual node service performance
 - Test how this scales in simulation (possibly using `mininet` or raspberry pi cluster testbed) to tens of
 server nodes, maybe hundreds? May need a beefy many-core AWS server instance to run `mininet` for that
 - Use more intelligent sync capabilities, possibly ieee1588 PTP protocol?
-- Determine best way to perform association grph setup:  provide some script with a list of all the ip:port pairs of 
+- Determine best way to perform association graph setup:  provide some script with a list of all the `ip`:`port` pairs of 
 all the nodes that will be set up in the initial system (must be greater than or equal to 2). The script will then
 generate a graph to assign each node an initial beacon address. 
 - Make the algorithm used for consensus generic / dynamic? Why just use raft?
-- setup service skeleton 
-- set up toml parsing
-- set up simple TC ebpf program to drop all traffic not from approved subnets (to increase security while
+- set up simple `TC` `ebpf` program to drop all traffic not from approved subnets (to increase security while
 still enabling unknown members to join )
+
+### Performance Tuning / Security
+
+This system can possibly benefit from individual nodes loading custom `qdisc` implementations for ingress/egress
+or some kind of full-linux-network-stack-traffic bypass with netfilter/netlink sockets? 
+
+At some point this repo will provide a simple `ebpf`-based `qdisc` classifier for ingress that 
+can be loaded into `tc` to provide somewhat better performance/security to whitelist only approved
+subnets. A way to blacklist most traffic except for new nodes attempting to join the system would be
+ smart to implement as well..
+
+And at a later point an egress classifier to help with routing within the cluster in a semi-ordered fashion
+(assigning higher priority to egress packets marked for replicating `shard` data, for example). This will need some
+experimentation
 
 ## References
 - [Lab specification](https://pdos.csail.mit.edu/6.824/labs/lab-shard.html)

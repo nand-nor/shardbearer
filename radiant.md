@@ -5,43 +5,33 @@
 A server is loaded with a `radiant` binary compiled with the appropriate types for the key-value store. 
 Use the *.service definition to set up the binary to load & run at a specific time as part of something like `systemd`.
 
-Assume all nodes in the cluster are somewhat in sync. Maybe using PTP? Not too much clock drift 
-
+Assume all nodes in the cluster are somewhat in sync. Maybe using ieee1588 PTP? Or some global sync state
+from the controller syncing on controller heartbeat? For now keep it simple & hope for not too much clock drift 
  
- 
-Upon executing it's `start` entry point, read a toml config file to parse the following 
-```
-- port
-- ip address
-- name
-- random bootstrap backoff time value
-- permissions
-- heartbeat interval
-- beacon interval
-- initial beacon ip address of -at least one other node in the system- 
-- initial election seed?
-- what else?
-```
-
-Setup radiant server to receive RPCs from other nodes (set up self base radiant server capabilities), set up data 
-structures, set up system information data, etc. All initial self set up done at this point. 
+Upon executing it's `start` entry point, read a toml config file to parse the needed info to set up it's own
+system and to join or bootstrap a new system. Setup radiant server to receive RPCs from other nodes (set up self
+ base radiant server capabilities), set up data structures, set up system information data, etc. All initial 
+ self set up done at this point. 
 
 Launch another thread. Set timer to wait whatever amount of time defined by the bootstrap backoff value. 
-At expiration, check self state. If we have already gotten a hello from the neighbor we are assigned, then
-the neighbor will "be in charge" (need this to break the case where we have a two node cycle in the
-system association graph) and we go to the next setup phase (`herald` election). Otherwise, setup RPC client and 
-send out the hello. Based on the information received back, do the following
-
-
-
-It then starts to send out a beacon handshake message at `beacon interval` to it's assigned beacon IP address, and then waits for a 
+At expiration, check self state. 
+It starts to send out a beacon handshake message at `beacon interval` to it's assigned beacon neighbor IP address, 
+and then waits for a 
 beacon response. `BeaconHandshake` sending some metadata to the neighbor (TBD but might include ip/port)
 Upon success, will receive a `BeaconResponse` that will assign the joiner with a temporary member ID and the
 joiner will temporarily be added to the group that the neighbor belongs to (if one exists).
 
-The beacon response is then followed up by an explicit `JoinSystem` RPC, which is relayed up to the top level
+If we have already gotten a hello from the neighbor we are assigned, then
+the neighbor will "be in charge" (need this to break the case where we have a two node cycle in the
+system association graph) and we go to the next setup phase depending on the current system state. In a totally
+new system (no node currently in the `INACTIVE` state has an edge incident to a node that is in a different state)
+we then move on to voting ( at this point `herald` election then from `herald` pool the `controller`). Otherwise, 
+the node is entering an existing system, so skip the voting setup RPC client and 
+send out an explicit `JoinSystem` RPC, which is relayed up to the top level
 controller, and upon success the current system state and membership information is exchanged. 
 So, a system admin can directly add a new `radiant` via direct call to the controller, or a `radiant` 
+
+More details later
 
 Each `radiant` maintains a lookup table to store the address of every other `radiant` it receives a beacon or
 other message from. Each `radiant` also maintains basic information regarding the current `order` it belongs to in
@@ -58,8 +48,6 @@ Member IDs, Group IDs, Leader IDs, Controller IDs
 
 0 is a non-valid identifier for any identifier type. If a response is sent with a 0 value identifier, that
 means that the identifier has not been set. Unless the corresponding state is UNASSOCIATED, this is an error
-
-
 
 ## Entry Cases
 
@@ -103,3 +91,48 @@ the current configuration, storing the set of `radiants` in it's own `order` (re
 Each `radiant` holds the information needed to become a `herald` of it's own `order` at any time, in case the
  `order's` currently elected `herald` goes offline for any reason, any `radiant` within the `order`
 can be elected to act as `herald`. 
+
+
+## `Radiant` traits and struct objects 
+
+## `Radiant` objects
+
+1. `RadiantController` --> this is the controller of state
+When an RPC comes in that requires a modification to the state of the radiant, the radiant's system, the
+radiants order, or anything relating to the cluster the radiant is a  member of, this is the 
+object implementation that controls the thread(s) that receive messages from the RPC service impl
+and handles them accordingly
+
+2. `RadiantRpcClientHandler`
+3. `RadiantService<K,V>`
+
+### `RadiantService` Struct
+
+``` 
+pub struct RadiantService<K, V> {
+    pub radiant: Arc<Mutex<RadiantNode<RadiantOrder, RadiantMembership, RadiantSystem>>>,
+    pub neighbor: RadiantID,
+    setup: bool,
+    pub ctrl_chan_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
+    pub herald: HeraldInfo,
+    pub shard_map: Arc<Mutex<dyn ShardMap<K, V>>>,
+}
+```
+
+#### RPC implementations
+- `impl Herald for RadiantService`
+- `impl HeraldController for RadiantService`
+- `impl RadiantNode for RadiantService`
+
+
+
+## Toml Configuration
+
+- `my_ip`
+- `my_port`
+- `neighbor_ip`
+- `neighbor_port`   
+- `bootstrap_backoff`       //random seed to generate a backoff period for bootstrapping
+- `election_timeout`        //tick interval for timeout of election
+- `heartbeat_interval`     //interval at which heartbeats are sent in ticks
+- `replication_max_bytes`  //max size of a replication chunk

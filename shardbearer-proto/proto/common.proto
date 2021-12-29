@@ -46,6 +46,10 @@ message ConfigId{
     uint64 cid = 1;
 }
 
+message OrderId{
+    uint64 gid = 1;
+}
+
 
 //Use with chrono to generate system time
 message Timestamp {
@@ -70,7 +74,7 @@ message BeaconResponse {
    Radiant neighbor = 3;
    HeraldInfo hid = 4;
    uint32 cluster_state = 5;
-   bool join_success = 6;
+   //bool join_success = 6;
 }
 
 message HeraldInfo {
@@ -87,7 +91,7 @@ message HeraldClient {
 }
 
 message RadiantClient {
-  string ip = 1;   //the IP to contact the herald
+    string ip = 1;   //the IP to contact the herald
     uint32 port = 2;  //the port to send the request to
 }
 

@@ -1611,6 +1611,158 @@ impl ::protobuf::reflect::ProtobufValue for ConfigId {
 }
 
 #[derive(PartialEq,Clone,Default)]
+pub struct OrderId {
+    // message fields
+    pub gid: u64,
+    // special fields
+    pub unknown_fields: ::protobuf::UnknownFields,
+    pub cached_size: ::protobuf::CachedSize,
+}
+
+impl<'a> ::std::default::Default for &'a OrderId {
+    fn default() -> &'a OrderId {
+        <OrderId as ::protobuf::Message>::default_instance()
+    }
+}
+
+impl OrderId {
+    pub fn new() -> OrderId {
+        ::std::default::Default::default()
+    }
+
+    // uint64 gid = 1;
+
+
+    pub fn get_gid(&self) -> u64 {
+        self.gid
+    }
+    pub fn clear_gid(&mut self) {
+        self.gid = 0;
+    }
+
+    // Param is passed by value, moved
+    pub fn set_gid(&mut self, v: u64) {
+        self.gid = v;
+    }
+}
+
+impl ::protobuf::Message for OrderId {
+    fn is_initialized(&self) -> bool {
+        true
+    }
+
+    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+        while !is.eof()? {
+            let (field_number, wire_type) = is.read_tag_unpack()?;
+            match field_number {
+                1 => {
+                    if wire_type != ::protobuf::wire_format::WireTypeVarint {
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                    }
+                    let tmp = is.read_uint64()?;
+                    self.gid = tmp;
+                },
+                _ => {
+                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
+                },
+            };
+        }
+        ::std::result::Result::Ok(())
+    }
+
+    // Compute sizes of nested messages
+    #[allow(unused_variables)]
+    fn compute_size(&self) -> u32 {
+        let mut my_size = 0;
+        if self.gid != 0 {
+            my_size += ::protobuf::rt::value_size(1, self.gid, ::protobuf::wire_format::WireTypeVarint);
+        }
+        my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
+        self.cached_size.set(my_size);
+        my_size
+    }
+
+    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+        if self.gid != 0 {
+            os.write_uint64(1, self.gid)?;
+        }
+        os.write_unknown_fields(self.get_unknown_fields())?;
+        ::std::result::Result::Ok(())
+    }
+
+    fn get_cached_size(&self) -> u32 {
+        self.cached_size.get()
+    }
+
+    fn get_unknown_fields(&self) -> &::protobuf::UnknownFields {
+        &self.unknown_fields
+    }
+
+    fn mut_unknown_fields(&mut self) -> &mut ::protobuf::UnknownFields {
+        &mut self.unknown_fields
+    }
+
+    fn as_any(&self) -> &dyn (::std::any::Any) {
+        self as &dyn (::std::any::Any)
+    }
+    fn as_any_mut(&mut self) -> &mut dyn (::std::any::Any) {
+        self as &mut dyn (::std::any::Any)
+    }
+    fn into_any(self: ::std::boxed::Box<Self>) -> ::std::boxed::Box<dyn (::std::any::Any)> {
+        self
+    }
+
+    fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
+        Self::descriptor_static()
+    }
+
+    fn new() -> OrderId {
+        OrderId::new()
+    }
+
+    fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        descriptor.get(|| {
+            let mut fields = ::std::vec::Vec::new();
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+                "gid",
+                |m: &OrderId| { &m.gid },
+                |m: &mut OrderId| { &mut m.gid },
+            ));
+            ::protobuf::reflect::MessageDescriptor::new_pb_name::<OrderId>(
+                "OrderId",
+                fields,
+                file_descriptor_proto()
+            )
+        })
+    }
+
+    fn default_instance() -> &'static OrderId {
+        static instance: ::protobuf::rt::LazyV2<OrderId> = ::protobuf::rt::LazyV2::INIT;
+        instance.get(OrderId::new)
+    }
+}
+
+impl ::protobuf::Clear for OrderId {
+    fn clear(&mut self) {
+        self.gid = 0;
+        self.unknown_fields.clear();
+    }
+}
+
+impl ::std::fmt::Debug for OrderId {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        ::protobuf::text_format::fmt(self, f)
+    }
+}
+
+impl ::protobuf::reflect::ProtobufValue for OrderId {
+    fn as_ref(&self) -> ::protobuf::reflect::ReflectValueRef {
+        ::protobuf::reflect::ReflectValueRef::Message(self)
+    }
+}
+
+#[derive(PartialEq,Clone,Default)]
 pub struct Timestamp {
     // message fields
     pub seconds: i64,
@@ -2144,7 +2296,6 @@ pub struct BeaconResponse {
     pub neighbor: ::protobuf::SingularPtrField<Radiant>,
     pub hid: ::protobuf::SingularPtrField<HeraldInfo>,
     pub cluster_state: u32,
-    pub join_success: bool,
     // special fields
     pub unknown_fields: ::protobuf::UnknownFields,
     pub cached_size: ::protobuf::CachedSize,
@@ -2271,21 +2422,6 @@ impl BeaconResponse {
     pub fn set_cluster_state(&mut self, v: u32) {
         self.cluster_state = v;
     }
-
-    // bool join_success = 6;
-
-
-    pub fn get_join_success(&self) -> bool {
-        self.join_success
-    }
-    pub fn clear_join_success(&mut self) {
-        self.join_success = false;
-    }
-
-    // Param is passed by value, moved
-    pub fn set_join_success(&mut self, v: bool) {
-        self.join_success = v;
-    }
 }
 
 impl ::protobuf::Message for BeaconResponse {
@@ -2334,13 +2470,6 @@ impl ::protobuf::Message for BeaconResponse {
                     let tmp = is.read_uint32()?;
                     self.cluster_state = tmp;
                 },
-                6 => {
-                    if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
-                    }
-                    let tmp = is.read_bool()?;
-                    self.join_success = tmp;
-                },
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
                 },
@@ -2370,9 +2499,6 @@ impl ::protobuf::Message for BeaconResponse {
         if self.cluster_state != 0 {
             my_size += ::protobuf::rt::value_size(5, self.cluster_state, ::protobuf::wire_format::WireTypeVarint);
         }
-        if self.join_success != false {
-            my_size += 2;
-        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -2397,9 +2523,6 @@ impl ::protobuf::Message for BeaconResponse {
         }
         if self.cluster_state != 0 {
             os.write_uint32(5, self.cluster_state)?;
-        }
-        if self.join_success != false {
-            os.write_bool(6, self.join_success)?;
         }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
@@ -2464,11 +2587,6 @@ impl ::protobuf::Message for BeaconResponse {
                 |m: &BeaconResponse| { &m.cluster_state },
                 |m: &mut BeaconResponse| { &mut m.cluster_state },
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
-                "join_success",
-                |m: &BeaconResponse| { &m.join_success },
-                |m: &mut BeaconResponse| { &mut m.join_success },
-            ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<BeaconResponse>(
                 "BeaconResponse",
                 fields,
@@ -2490,7 +2608,6 @@ impl ::protobuf::Clear for BeaconResponse {
         self.neighbor.clear();
         self.hid.clear();
         self.cluster_state = 0;
-        self.join_success = false;
         self.unknown_fields.clear();
     }
 }
@@ -4326,34 +4443,34 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x12\x10\n\x03sid\x18\x01\x20\x01(\x04R\x03sid\x12\x1b\n\tfirst_key\x18\
     \x02\x20\x01(\x03R\x08firstKey\x12\x19\n\x08last_key\x18\x03\x20\x01(\
     \x03R\x07lastKey\"\x1c\n\x08ConfigId\x12\x10\n\x03cid\x18\x01\x20\x01(\
-    \x04R\x03cid\";\n\tTimestamp\x12\x18\n\x07seconds\x18\x01\x20\x01(\x03R\
-    \x07seconds\x12\x14\n\x05nanos\x18\x02\x20\x01(\x05R\x05nanos\"/\n\tShar\
-    dMove\x12\x10\n\x03sid\x18\x01\x20\x01(\x04R\x03sid\x12\x10\n\x03gid\x18\
-    \x02\x20\x01(\x04R\x03gid\"\x1a\n\x06Beacon\x12\x10\n\x03mid\x18\x01\x20\
-    \x01(\x04R\x03mid\"\xc1\x01\n\x0eBeaconResponse\x12\x10\n\x03gid\x18\x01\
-    \x20\x01(\x04R\x03gid\x12\x10\n\x03mid\x18\x02\x20\x01(\x04R\x03mid\x12$\
-    \n\x08neighbor\x18\x03\x20\x01(\x0b2\x08.RadiantR\x08neighbor\x12\x1d\n\
+    \x04R\x03cid\"\x1b\n\x07OrderId\x12\x10\n\x03gid\x18\x01\x20\x01(\x04R\
+    \x03gid\";\n\tTimestamp\x12\x18\n\x07seconds\x18\x01\x20\x01(\x03R\x07se\
+    conds\x12\x14\n\x05nanos\x18\x02\x20\x01(\x05R\x05nanos\"/\n\tShardMove\
+    \x12\x10\n\x03sid\x18\x01\x20\x01(\x04R\x03sid\x12\x10\n\x03gid\x18\x02\
+    \x20\x01(\x04R\x03gid\"\x1a\n\x06Beacon\x12\x10\n\x03mid\x18\x01\x20\x01\
+    (\x04R\x03mid\"\x9e\x01\n\x0eBeaconResponse\x12\x10\n\x03gid\x18\x01\x20\
+    \x01(\x04R\x03gid\x12\x10\n\x03mid\x18\x02\x20\x01(\x04R\x03mid\x12$\n\
+    \x08neighbor\x18\x03\x20\x01(\x0b2\x08.RadiantR\x08neighbor\x12\x1d\n\
     \x03hid\x18\x04\x20\x01(\x0b2\x0b.HeraldInfoR\x03hid\x12#\n\rcluster_sta\
-    te\x18\x05\x20\x01(\rR\x0cclusterState\x12!\n\x0cjoin_success\x18\x06\
-    \x20\x01(\x08R\x0bjoinSuccess\"f\n\nHeraldInfo\x12\x10\n\x03gid\x18\x01\
-    \x20\x01(\x04R\x03gid\x12\x10\n\x03mid\x18\x02\x20\x01(\x04R\x03mid\x12\
-    \x10\n\x03hid\x18\x03\x20\x01(\x04R\x03hid\x12\x0e\n\x02ip\x18\x04\x20\
-    \x01(\tR\x02ip\x12\x12\n\x04port\x18\x05\x20\x01(\rR\x04port\"2\n\x0cHer\
-    aldClient\x12\x0e\n\x02ip\x18\x01\x20\x01(\tR\x02ip\x12\x12\n\x04port\
-    \x18\x02\x20\x01(\rR\x04port\"3\n\rRadiantClient\x12\x0e\n\x02ip\x18\x01\
-    \x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x02\x20\x01(\rR\x04port\"<\n\
-    \x04Role\x12\x10\n\x03gid\x18\x01\x20\x01(\x04R\x03gid\x12\x10\n\x03mid\
-    \x18\x02\x20\x01(\x04R\x03mid\x12\x10\n\x03rid\x18\x03\x20\x01(\x04R\x03\
-    rid\"$\n\x05Roles\x12\x1b\n\x05roles\x18\x01\x20\x03(\x0b2\x05.RoleR\x05\
-    roles\"\x1e\n\nController\x12\x10\n\x03cid\x18\x01\x20\x01(\x04R\x03cid\
-    \"\x96\x01\n\x10ShardMoveRequest\x12\x10\n\x03sid\x18\x01\x20\x01(\x04R\
-    \x03sid\x12\x0e\n\x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\
-    \x03\x20\x01(\rR\x04port\x12\x12\n\x04size\x18\x04\x20\x01(\x04R\x04size\
-    \x12\x19\n\x08key_type\x18\x05\x20\x01(\tR\x07keyType\x12\x1d\n\nvalue_t\
-    ype\x18\x06\x20\x01(\tR\tvalueType\"V\n\x18ShardMoveRequestResponse\x12\
-    \x16\n\x06result\x18\x01\x20\x01(\x08R\x06result\x12\x0e\n\x02ip\x18\x02\
-    \x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x03\x20\x01(\rR\x04portb\x06pro\
-    to3\
+    te\x18\x05\x20\x01(\rR\x0cclusterState\"f\n\nHeraldInfo\x12\x10\n\x03gid\
+    \x18\x01\x20\x01(\x04R\x03gid\x12\x10\n\x03mid\x18\x02\x20\x01(\x04R\x03\
+    mid\x12\x10\n\x03hid\x18\x03\x20\x01(\x04R\x03hid\x12\x0e\n\x02ip\x18\
+    \x04\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x05\x20\x01(\rR\x04port\"2\
+    \n\x0cHeraldClient\x12\x0e\n\x02ip\x18\x01\x20\x01(\tR\x02ip\x12\x12\n\
+    \x04port\x18\x02\x20\x01(\rR\x04port\"3\n\rRadiantClient\x12\x0e\n\x02ip\
+    \x18\x01\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x02\x20\x01(\rR\x04port\
+    \"<\n\x04Role\x12\x10\n\x03gid\x18\x01\x20\x01(\x04R\x03gid\x12\x10\n\
+    \x03mid\x18\x02\x20\x01(\x04R\x03mid\x12\x10\n\x03rid\x18\x03\x20\x01(\
+    \x04R\x03rid\"$\n\x05Roles\x12\x1b\n\x05roles\x18\x01\x20\x03(\x0b2\x05.\
+    RoleR\x05roles\"\x1e\n\nController\x12\x10\n\x03cid\x18\x01\x20\x01(\x04\
+    R\x03cid\"\x96\x01\n\x10ShardMoveRequest\x12\x10\n\x03sid\x18\x01\x20\
+    \x01(\x04R\x03sid\x12\x0e\n\x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\
+    \x04port\x18\x03\x20\x01(\rR\x04port\x12\x12\n\x04size\x18\x04\x20\x01(\
+    \x04R\x04size\x12\x19\n\x08key_type\x18\x05\x20\x01(\tR\x07keyType\x12\
+    \x1d\n\nvalue_type\x18\x06\x20\x01(\tR\tvalueType\"V\n\x18ShardMoveReque\
+    stResponse\x12\x16\n\x06result\x18\x01\x20\x01(\x08R\x06result\x12\x0e\n\
+    \x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x03\x20\x01(\rR\
+    \x04portb\x06proto3\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
