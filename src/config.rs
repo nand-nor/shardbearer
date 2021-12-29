@@ -1,5 +1,7 @@
+use raft::Config;
 use serde::{Deserialize, Serialize};
-
+use shardbearer_core::radiant::MemberID;
+use shardbearer_core::raft::RaftCfg;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -11,6 +13,7 @@ pub struct ShardbearerConfig {
     neighbor_ip: String,
     neighbor_port: u16,
     bootstrap_backoff: u64,
+    raftcfg: RaftCfg,
 }
 
 impl ShardbearerConfig {
@@ -29,6 +32,23 @@ impl ShardbearerConfig {
 
     pub fn bootstrap_backoff(&self) -> u64 {
         self.bootstrap_backoff
+    }
+
+    pub fn raft_cfg(&self) -> Config {
+        self.raftcfg.as_cfg()
+    }
+
+    pub fn id(&self) -> MemberID {
+        self.raftcfg.id()
+    }
+    pub fn election_timeout(&self) -> u64 {
+        self.raftcfg.election_timeout()
+    }
+    pub fn heartbeat_interval(&self) -> u64 {
+        self.raftcfg.heartbeat_interval()
+    }
+    pub fn replication_max_bytes(&self) -> usize {
+        self.raftcfg.replication_max_bytes()
     }
 }
 

@@ -1,36 +1,42 @@
-use std::io::Read;
-use std::sync::{Arc, Mutex};
-use std::time::Instant;
-use std::{io, thread};
+use shardbearer_core::herald::Herald;
+use shardbearer_core::radiant::MemberID;
+use tracing::{debug, error, info, trace, warn};
+use shardbearer_proto::common::common::HeraldInfo;
 
-use futures::channel::oneshot;
-use futures::executor::block_on;
-use futures::prelude::*;
-use grpcio::{
-    ChannelBuilder, Environment, ResourceQuota, RpcContext, Server, ServerBuilder,
-    ServerStreamingSink, UnarySink, WriteFlags,
-};
+use indexmap::IndexMap;
+use raft::eraftpb::Message;
 
-use tracing::{error, info, span, warn, Level};
-//use tracing_subscriber;
 
-use shardbearer_proto::herald::herald::*;
-use shardbearer_proto::herald::herald_grpc::Herald;
+pub struct HeraldMsg {
+    pub hid: HeraldInfo,
+    pub msg: Message,
+}
 
-use shardbearer_proto::common::common::{Radiant, Roles};
-//use shardbearer_proto::herald::herald_grpc::Herald;
+pub struct CtrlHeraldMsg {
+    pub hid: HeraldInfo,
+    pub msg: Message,
+}
 
-#[derive(Clone)]
-pub struct HeraldService {}
+pub struct HeraldService {
+    peers_tx: IndexMap<MemberID, tokio::sync::mpsc::UnboundedSender<HeraldMsg>>,
+    peers_rx: IndexMap<MemberID, tokio::sync::mpsc::UnboundedReceiver<HeraldMsg>>,
+    controller_rx: tokio::sync::mpsc::UnboundedReceiver<CtrlHeraldMsg>,
+    controller_tx: tokio::sync::mpsc::UnboundedSender<CtrlHeraldMsg>,
+    controller: MemberID,
+}
+
+pub struct ControllerHeraldService {
+    heralds_tx: IndexMap<MemberID, tokio::sync::mpsc::UnboundedSender<CtrlHeraldMsg>>,
+    heralds_rx: IndexMap<MemberID, tokio::sync::mpsc::UnboundedReceiver<CtrlHeraldMsg>>,
+}
 
 impl Herald for HeraldService {
-    fn herald_vote(&mut self, ctx: RpcContext<'_>, radiant: Radiant, sink: UnarySink<Roles>) {
-        let resp = Roles::new();
+    type ControllerId = MemberID;
 
-        let f = sink
-            .success(resp)
-            .map_err(|e: grpcio::Error| error!("failed to handle request: {:?}", e))
-            .map(|_| ());
-        ctx.spawn(f)
+    fn elect_controller(&mut self) -> Self::ControllerId {
+        0
+    }
+    fn controller(&mut self) -> Self::ControllerId {
+        0
     }
 }

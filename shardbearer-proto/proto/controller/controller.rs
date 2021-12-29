@@ -24,8 +24,8 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_25_2;
 
 static file_descriptor_proto_data: &'static [u8] = b"\
-    \n\x1bcontroller/controller.proto\x1a\x0ccommon.proto2\x91\x01\n\x10Hera\
-    ldController\x12$\n\x04Join\x12\n.JoinGroup\x1a\x0e.ConfigSummary\"\0\
+    \n\x1bcontroller/controller.proto\x1a\x0ccommon.proto2\x94\x01\n\x13Hera\
+    ldControllerRPC\x12$\n\x04Join\x12\n.JoinGroup\x1a\x0e.ConfigSummary\"\0\
     \x12&\n\x05Leave\x12\x0b.LeaveGroup\x1a\x0e.ConfigSummary\"\0\x12/\n\x10\
     GetCurrentConfig\x12\t.ConfigId\x1a\x0e.ConfigSummary\"\0b\x06proto3\
 ";

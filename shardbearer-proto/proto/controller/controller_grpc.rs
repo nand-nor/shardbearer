@@ -18,41 +18,41 @@
 #![allow(unused_imports)]
 #![allow(unused_results)]
 
-const METHOD_HERALD_CONTROLLER_JOIN: ::grpcio::Method<super::common::JoinGroup, super::common::ConfigSummary> = ::grpcio::Method {
+const METHOD_HERALD_CONTROLLER_RPC_JOIN: ::grpcio::Method<super::common::JoinGroup, super::common::ConfigSummary> = ::grpcio::Method {
     ty: ::grpcio::MethodType::Unary,
-    name: "/HeraldController/Join",
+    name: "/HeraldControllerRPC/Join",
     req_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
     resp_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
 };
 
-const METHOD_HERALD_CONTROLLER_LEAVE: ::grpcio::Method<super::common::LeaveGroup, super::common::ConfigSummary> = ::grpcio::Method {
+const METHOD_HERALD_CONTROLLER_RPC_LEAVE: ::grpcio::Method<super::common::LeaveGroup, super::common::ConfigSummary> = ::grpcio::Method {
     ty: ::grpcio::MethodType::Unary,
-    name: "/HeraldController/Leave",
+    name: "/HeraldControllerRPC/Leave",
     req_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
     resp_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
 };
 
-const METHOD_HERALD_CONTROLLER_GET_CURRENT_CONFIG: ::grpcio::Method<super::common::ConfigId, super::common::ConfigSummary> = ::grpcio::Method {
+const METHOD_HERALD_CONTROLLER_RPC_GET_CURRENT_CONFIG: ::grpcio::Method<super::common::ConfigId, super::common::ConfigSummary> = ::grpcio::Method {
     ty: ::grpcio::MethodType::Unary,
-    name: "/HeraldController/GetCurrentConfig",
+    name: "/HeraldControllerRPC/GetCurrentConfig",
     req_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
     resp_mar: ::grpcio::Marshaller { ser: ::grpcio::pb_ser, de: ::grpcio::pb_de },
 };
 
 #[derive(Clone)]
-pub struct HeraldControllerClient {
+pub struct HeraldControllerRpcClient {
     client: ::grpcio::Client,
 }
 
-impl HeraldControllerClient {
+impl HeraldControllerRpcClient {
     pub fn new(channel: ::grpcio::Channel) -> Self {
-        HeraldControllerClient {
+        HeraldControllerRpcClient {
             client: ::grpcio::Client::new(channel),
         }
     }
 
     pub fn join_opt(&self, req: &super::common::JoinGroup, opt: ::grpcio::CallOption) -> ::grpcio::Result<super::common::ConfigSummary> {
-        self.client.unary_call(&METHOD_HERALD_CONTROLLER_JOIN, req, opt)
+        self.client.unary_call(&METHOD_HERALD_CONTROLLER_RPC_JOIN, req, opt)
     }
 
     pub fn join(&self, req: &super::common::JoinGroup) -> ::grpcio::Result<super::common::ConfigSummary> {
@@ -60,7 +60,7 @@ impl HeraldControllerClient {
     }
 
     pub fn join_async_opt(&self, req: &super::common::JoinGroup, opt: ::grpcio::CallOption) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
-        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_JOIN, req, opt)
+        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_RPC_JOIN, req, opt)
     }
 
     pub fn join_async(&self, req: &super::common::JoinGroup) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
@@ -68,7 +68,7 @@ impl HeraldControllerClient {
     }
 
     pub fn leave_opt(&self, req: &super::common::LeaveGroup, opt: ::grpcio::CallOption) -> ::grpcio::Result<super::common::ConfigSummary> {
-        self.client.unary_call(&METHOD_HERALD_CONTROLLER_LEAVE, req, opt)
+        self.client.unary_call(&METHOD_HERALD_CONTROLLER_RPC_LEAVE, req, opt)
     }
 
     pub fn leave(&self, req: &super::common::LeaveGroup) -> ::grpcio::Result<super::common::ConfigSummary> {
@@ -76,7 +76,7 @@ impl HeraldControllerClient {
     }
 
     pub fn leave_async_opt(&self, req: &super::common::LeaveGroup, opt: ::grpcio::CallOption) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
-        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_LEAVE, req, opt)
+        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_RPC_LEAVE, req, opt)
     }
 
     pub fn leave_async(&self, req: &super::common::LeaveGroup) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
@@ -84,7 +84,7 @@ impl HeraldControllerClient {
     }
 
     pub fn get_current_config_opt(&self, req: &super::common::ConfigId, opt: ::grpcio::CallOption) -> ::grpcio::Result<super::common::ConfigSummary> {
-        self.client.unary_call(&METHOD_HERALD_CONTROLLER_GET_CURRENT_CONFIG, req, opt)
+        self.client.unary_call(&METHOD_HERALD_CONTROLLER_RPC_GET_CURRENT_CONFIG, req, opt)
     }
 
     pub fn get_current_config(&self, req: &super::common::ConfigId) -> ::grpcio::Result<super::common::ConfigSummary> {
@@ -92,7 +92,7 @@ impl HeraldControllerClient {
     }
 
     pub fn get_current_config_async_opt(&self, req: &super::common::ConfigId, opt: ::grpcio::CallOption) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
-        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_GET_CURRENT_CONFIG, req, opt)
+        self.client.unary_call_async(&METHOD_HERALD_CONTROLLER_RPC_GET_CURRENT_CONFIG, req, opt)
     }
 
     pub fn get_current_config_async(&self, req: &super::common::ConfigId) -> ::grpcio::Result<::grpcio::ClientUnaryReceiver<super::common::ConfigSummary>> {
@@ -103,24 +103,24 @@ impl HeraldControllerClient {
     }
 }
 
-pub trait HeraldController {
+pub trait HeraldControllerRpc {
     fn join(&mut self, ctx: ::grpcio::RpcContext, req: super::common::JoinGroup, sink: ::grpcio::UnarySink<super::common::ConfigSummary>);
     fn leave(&mut self, ctx: ::grpcio::RpcContext, req: super::common::LeaveGroup, sink: ::grpcio::UnarySink<super::common::ConfigSummary>);
     fn get_current_config(&mut self, ctx: ::grpcio::RpcContext, req: super::common::ConfigId, sink: ::grpcio::UnarySink<super::common::ConfigSummary>);
 }
 
-pub fn create_herald_controller<S: HeraldController + Send + Clone + 'static>(s: S) -> ::grpcio::Service {
+pub fn create_herald_controller_rpc<S: HeraldControllerRpc + Send + Clone + 'static>(s: S) -> ::grpcio::Service {
     let mut builder = ::grpcio::ServiceBuilder::new();
     let mut instance = s.clone();
-    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_JOIN, move |ctx, req, resp| {
+    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_RPC_JOIN, move |ctx, req, resp| {
         instance.join(ctx, req, resp)
     });
     let mut instance = s.clone();
-    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_LEAVE, move |ctx, req, resp| {
+    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_RPC_LEAVE, move |ctx, req, resp| {
         instance.leave(ctx, req, resp)
     });
     let mut instance = s;
-    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_GET_CURRENT_CONFIG, move |ctx, req, resp| {
+    builder = builder.add_unary_handler(&METHOD_HERALD_CONTROLLER_RPC_GET_CURRENT_CONFIG, move |ctx, req, resp| {
         instance.get_current_config(ctx, req, resp)
     });
     builder.build()

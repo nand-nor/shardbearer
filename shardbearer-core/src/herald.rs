@@ -1,14 +1,15 @@
-#[derive(Clone)]
-pub enum HeraldState {
+/*#[derive(Clone)]
+pub enum HeraldRole {
     VOTER,
     CONTROLLER,
 }
 
-impl Default for HeraldState {
+impl Default for HeraldRole {
     fn default() -> Self {
-        HeraldState::VOTER
+        HeraldRole::VOTER
     }
 }
+*/
 
 pub trait Herald {
     type ControllerId;

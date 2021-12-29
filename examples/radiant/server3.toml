@@ -4,3 +4,8 @@ my_port= 50053
 neighbor_ip= "127.0.0.1"
 neighbor_port= 30031
 bootstrap_backoff = 13
+[raftcfg]
+id = 3
+election_timeout= 10
+heartbeat_interval = 2
+replication_max_bytes = 1024
