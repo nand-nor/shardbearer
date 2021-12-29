@@ -1,11 +1,10 @@
 use shardbearer_core::herald::Herald;
 use shardbearer_core::radiant::MemberID;
-use tracing::{debug, error, info, trace, warn};
 use shardbearer_proto::common::common::HeraldInfo;
+use tracing::{debug, error, info, trace, warn};
 
 use indexmap::IndexMap;
 use raft::eraftpb::Message;
-
 
 pub struct HeraldMsg {
     pub hid: HeraldInfo,

@@ -15,14 +15,15 @@ any major disruption in service or significant downtime taken to recreate previo
  
  
  
- Order states:
- INACTIVE
- VOTING
- ACTIVE
- RESETLOCK
- ERROR
+Order states:
+- INACTIVE
+- VOTING
+- ACTIVE
+- RESETLOCK
+- ERROR
  
  
  voting and resetlock states are lock states. Until the system state changes no new node can enter the system,
  request system info, make a change, etc. It is up to individual nodes to repeat requests as often as needed
- if their requests are denied during these states. Possibly need to add in a RetryLast state?
+ if their requests are denied during these states. Possibly need to add in a RetryLast state? Also may need to
+ add in different voting types. Voting on the correctness of a replica group and voting for `heralds` etc.? 

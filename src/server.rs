@@ -5,27 +5,16 @@ use std::sync::{Arc, Mutex};
 use futures::channel::oneshot;
 use futures::executor::block_on;
 use futures::prelude::*;
-use grpcio::{
-    // ChannelBuilder,
-    Environment,
-    // ResourceQuota,
-    RpcContext,
-    //Server,
-    ServerBuilder,
-    // ServerStreamingSink,
-    UnarySink,
-    //  WriteFlags,
-};
+use grpcio::{Environment, RpcContext, ServerBuilder, UnarySink};
 use protobuf;
 use tracing::{debug, error, info, trace, warn, Level};
 use tracing_subscriber;
 
+use crate::rsvc::RadiantService;
 use shardbearer_proto::common::common::{
     Beacon, BeaconResponse, ConfigId, ConfigSummary, Controller, HeraldInfo, JoinGroup, LeaveGroup,
     Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
-//use shardbearer_proto::radiant::radiant::*;
-use crate::rsvc::RadiantService;
 
 use crate::config::ShardbearerConfig;
 use crate::radiant::RadiantNode;
@@ -41,23 +30,27 @@ use shardbearer_proto::herald::herald_grpc::HeraldRpc;
 use shardbearer_proto::radiant::radiant_grpc::{create_radiant_rpc, RadiantRpc};
 use std::convert::TryInto;
 
-
 //You can use this as the entry point or optionally
 //define your own entry point that calls radiant_server()
 //see the custom-entrypoint example
-pub fn server_main<K: 'static + std::hash::Hash + Eq+Clone,V:'static +Clone>() -> Result<(), Box<dyn std::error::Error>> {
+pub fn server_main<K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone>(
+) -> Result<(), Box<dyn std::error::Error>> {
     //TODO make this a verbose mode feature config
     std::env::set_var("RUST_LOG", "info,warn,debug,trace,error");
-    let sub = tracing_subscriber::FmtSubscriber::builder().with_max_level(Level::TRACE).finish();
-    tracing::subscriber::set_global_default(sub).expect("Error setting default global trace subscriber");
-
-
+    let sub = tracing_subscriber::FmtSubscriber::builder()
+        .with_max_level(Level::TRACE)
+        .finish();
+    tracing::subscriber::set_global_default(sub)
+        .expect("Error setting default global trace subscriber");
 
     if let Some(toml) = std::env::args().nth(1) {
         let cfg = match crate::config::parse_cfg(&toml) {
             Ok(cfg) => cfg,
             Err(e) => {
-                tracing::error!("RadiantServer: Invalid config file provided: {:?}", e.to_string());
+                tracing::error!(
+                    "RadiantServer: Invalid config file provided: {:?}",
+                    e.to_string()
+                );
                 std::process::exit(1);
             }
         };
@@ -68,21 +61,22 @@ pub fn server_main<K: 'static + std::hash::Hash + Eq+Clone,V:'static +Clone>() -
             .thread_stack_size(tokio_cfg.thread_stack_size())
             .thread_name(tokio_cfg.runtime_name())
             .enable_all()
-            .build(){
-            Ok(t)=>t,
-            Err(e)=>{
-                tracing::error!("RadiantServer: Unable to build requested tokio runtime: {:?}", e.to_string());
+            .build()
+        {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!(
+                    "RadiantServer: Unable to build requested tokio runtime: {:?}",
+                    e.to_string()
+                );
                 std::process::exit(1);
             }
         };
         rt.block_on(async move {
-            if let Err(e) = radiant_server::<K,V>(cfg).await {
+            if let Err(e) = radiant_server::<K, V>(cfg).await {
                 tracing::error!("RadiantServer: error running server {:?}", e.to_string());
-
             }
-
         });
-
     } else {
         tracing::error!("RadiantServer: No config file provided");
         std::process::exit(1);
@@ -90,10 +84,10 @@ pub fn server_main<K: 'static + std::hash::Hash + Eq+Clone,V:'static +Clone>() -
     Ok(())
 }
 
-
 #[tracing::instrument]
-pub async fn radiant_server<K: 'static + std::hash::Hash + Eq+Clone,V:'static +Clone>(cfg: ShardbearerConfig) -> Result<(), Box<dyn std::error::Error>> {//} where ShardHashMap<K, V>: ShardMap<K, V>  {
-
+pub async fn radiant_server<K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone>(
+    cfg: ShardbearerConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
 
     let env = Arc::new(Environment::new(2));
 
@@ -122,20 +116,14 @@ pub async fn radiant_server<K: 'static + std::hash::Hash + Eq+Clone,V:'static +C
     let map_clone = instance.share_map();
 
     let rhndlr: &'static mut RadiantRpcClientHandler = Box::leak(Box::new(
-        RadiantRpcClientHandler::new(
-            cmd_chan_rx,
-            rpc_cli_tx,
-            Arc::clone(&arc_node)
-        ),
+        RadiantRpcClientHandler::new(cmd_chan_rx, rpc_cli_tx, Arc::clone(&arc_node)),
     ));
-    let rctrl: &'static mut RadiantController = Box::leak(Box::new(
-        RadiantController::new(
-            ctrl_chan_rx,
-            ctrl_chan_tx,
-            cmd_chan_tx,
-            Arc::clone(&arc_node), //controller_node,
-        )
-    ));
+    let rctrl: &'static mut RadiantController = Box::leak(Box::new(RadiantController::new(
+        ctrl_chan_rx,
+        ctrl_chan_tx,
+        cmd_chan_tx,
+        Arc::clone(&arc_node), //controller_node,
+    )));
 
     let service = create_radiant_rpc(instance);
     let mut server = ServerBuilder::new(env)
@@ -147,13 +135,13 @@ pub async fn radiant_server<K: 'static + std::hash::Hash + Eq+Clone,V:'static +C
     server.start();
 
     tokio::spawn(async move {
-        if let Err(_) = rctrl.run(cfg).await{
+        if let Err(_) = rctrl.run(cfg).await {
             error!("Error running control thread")
         }
     });
 
     tokio::spawn(async move {
-        if let Err(_) = rhndlr.run().await{
+        if let Err(_) = rhndlr.run().await {
             error!("Error running client handler thread")
         }
     });

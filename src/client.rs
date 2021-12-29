@@ -26,7 +26,7 @@ pub async fn perform_handshake_async(
 pub fn handshake(
     neighbor_ip: String,
     neighbor_port: u16,
-    tx: tokio::sync::mpsc::UnboundedSender<StateMessage>, //tokio::sync::mpsc::UnboundedSender<BeaconResponse>,
+    tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     tracing::trace!("Executing bootstrap! Creating client for handshake");
 

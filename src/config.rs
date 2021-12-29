@@ -6,11 +6,9 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
-
 pub const RUNTIME_DEF_NUM_THREADS: usize = 1;
 pub const RUNTIME_DEF_THREADSTACK: usize = 65536;
 pub const RUNTIME_DEF_NAME: &str = "radiant";
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShardbearerConfig {
@@ -21,7 +19,6 @@ pub struct ShardbearerConfig {
     bootstrap_backoff: u64,
     raftcfg: RaftCfg,
     runtime: Option<RuntimeCfg>,
-
 }
 
 impl ShardbearerConfig {
@@ -46,8 +43,8 @@ impl ShardbearerConfig {
         self.raftcfg.as_cfg()
     }
     pub fn runtime_cfg(&self) -> RuntimeCfg {
-        if let Some(rt) = &self.runtime{
-           return rt.clone()
+        if let Some(rt) = &self.runtime {
+            return rt.clone();
         }
         RuntimeCfg::default_build()
     }
@@ -66,7 +63,6 @@ impl ShardbearerConfig {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RuntimeCfg {
     num_threads: usize,
@@ -75,23 +71,22 @@ pub struct RuntimeCfg {
 }
 
 impl RuntimeCfg {
-    pub fn default_build()->Self{
-        Self{
+    pub fn default_build() -> Self {
+        Self {
             num_threads: RUNTIME_DEF_NUM_THREADS,
             thread_stack_size: RUNTIME_DEF_THREADSTACK,
             runtime_name: RUNTIME_DEF_NAME.to_string(),
         }
     }
-    pub fn num_threads(&self)-> usize{
+    pub fn num_threads(&self) -> usize {
         self.num_threads
     }
-    pub fn thread_stack_size(&self)->usize{
+    pub fn thread_stack_size(&self) -> usize {
         self.thread_stack_size
     }
-    pub fn runtime_name(&self) ->String{
+    pub fn runtime_name(&self) -> String {
         self.runtime_name.clone()
     }
-
 }
 
 pub fn parse_cfg(file: &str) -> Result<ShardbearerConfig, Box<dyn Error>> {

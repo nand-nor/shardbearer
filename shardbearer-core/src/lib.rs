@@ -1,5 +1,5 @@
-pub mod herald;
 pub mod cluster;
+pub mod herald;
 pub mod order;
 pub mod radiant;
 pub mod raft;
@@ -10,4 +10,3 @@ pub mod system;
 extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
-

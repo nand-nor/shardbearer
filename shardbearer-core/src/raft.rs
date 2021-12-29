@@ -71,7 +71,6 @@ impl RaftCfg {
     }
 }
 
-
 impl RaftNode {
     pub fn new(rcfg: RaftCfg, logger: &slog::Logger) -> Result<Self, ()> {
         let storage = MemStorage::new();
@@ -105,7 +104,4 @@ impl RaftNode {
         };
         Ok(Self { inner: node })
     }
-
-
 }
-

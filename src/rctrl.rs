@@ -1,5 +1,5 @@
 use crate::config::ShardbearerConfig;
-use crate::radiant::{RadiantNode, RadiantMsg};
+use crate::radiant::{RadiantMsg, RadiantNode};
 use crate::rhndlr::{ClientCommand, RadiantRpcClientHandler};
 use shardbearer_core::order::RadiantOrderState;
 use shardbearer_core::radiant::{HeraldRole, RadiantRole, RadiantState, RadiantStateMachine};
@@ -10,11 +10,11 @@ use shardbearer_core::system::{RadiantSystem, SysState};
 use shardbearer_proto::common::common::{BeaconResponse, Radiant as RadiantId};
 use timer::{Guard, Timer};
 
+use crate::herald::HeraldMsg;
+use raft::eraftpb::{Message, MessageType};
 use raft::Config;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
-use crate::herald::HeraldMsg;
-use raft::eraftpb::{Message, MessageType};
 
 pub struct RadiantController<'a> {
     ctrl_chan_rx: tokio::sync::mpsc::UnboundedReceiver<StateMessage>,
@@ -58,13 +58,8 @@ impl RadiantController<'static> {
         guard: Guard,
         mut trigger_rx: tokio::sync::mpsc::Receiver<()>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-
         let (tx_drop, mut rx) = tokio::sync::oneshot::channel();
-        RadiantController::initial_association(
-            guard,
-            rx,
-        )
-        .await?;
+        RadiantController::initial_association(guard, rx).await?;
 
         tokio::spawn(async move {
             match trigger_rx.recv().await {
@@ -77,7 +72,8 @@ impl RadiantController<'static> {
                 }
                 None => {}
             };
-        }).await;
+        })
+        .await;
         Ok(())
     }
 
@@ -129,30 +125,25 @@ impl RadiantController<'static> {
 
         let closure_tx = tx_init.clone();
 
-        let guard = timer.schedule_repeating(chrono::Duration::milliseconds(backoff as _), move || {
-            match crate::client::handshake(
-                neighbor_ip.clone(),
-                neighbor_port.clone(),
-                closure_tx.clone(),
-            ) {
-                Ok(_) => {}
-                Err(_) => {}
-            };
-        });
+        let guard =
+            timer.schedule_repeating(chrono::Duration::milliseconds(backoff as _), move || {
+                match crate::client::handshake(
+                    neighbor_ip.clone(),
+                    neighbor_port.clone(),
+                    closure_tx.clone(),
+                ) {
+                    Ok(_) => {}
+                    Err(_) => {}
+                };
+            });
 
         tokio::spawn(async move {
-            if let Err(_) = RadiantController::bootstrap(
-                guard,
-                trigger_rx,
-            )
-                .await {
-                tracing::error!( "Error running bootstrap setup steps");
+            if let Err(_) = RadiantController::bootstrap(guard, trigger_rx).await {
+                tracing::error!("Error running bootstrap setup steps");
             }
         });
 
-        tracing::trace!(
-            "Dropping into RadiantController state monitoring loop"
-        );
+        tracing::trace!("Dropping into RadiantController state monitoring loop");
 
         //drop into state monitoring loop
         loop {
@@ -165,7 +156,7 @@ impl RadiantController<'static> {
                                 && resp.get_neighbor().get_port() == port as u32
                                 && resp.get_cluster_state() as i32
                                     != RadiantOrderState::VOTING as i32
-                                 &&  resp.get_cluster_state() as i32
+                                && resp.get_cluster_state() as i32
                                     != RadiantOrderState::RESETLOCK as i32)
                                 || resp.get_cluster_state() as i32
                                     == RadiantOrderState::ACTIVE as i32
@@ -179,10 +170,10 @@ impl RadiantController<'static> {
                                 }
                             }
 
-                            if resp.get_cluster_state() as i32
-                                == RadiantOrderState::VOTING as i32
+                            if resp.get_cluster_state() as i32 == RadiantOrderState::VOTING as i32
                                 || resp.get_cluster_state() as i32
-                                == RadiantOrderState::RESETLOCK as i32 {
+                                    == RadiantOrderState::RESETLOCK as i32
+                            {
                                 tracing::trace!(
                                     "System is locked, keep trying system state changes"
                                 );
@@ -190,7 +181,7 @@ impl RadiantController<'static> {
                                 == RadiantOrderState::INACTIVE as i32
                             {
                                 // let assoc = Association{
-                               /*  match self.radiant.lock() {
+                                /*  match self.radiant.lock() {
                                     Ok(mut g) => (g.update_order_state(RadiantOrderState::VOTING)),
                                     Err(_) => {
                                         tracing::error!("System error getting mutex guard, failure to update state to voting");
@@ -200,16 +191,15 @@ impl RadiantController<'static> {
 
                                 let mut msg = Message::default();
                                 msg.set_msg_type(MessageType::MsgRequestVote);
-                                let new_msg = ClientCommand::PEER(RadiantMsg{
+                                let new_msg = ClientCommand::PEER(RadiantMsg {
                                     rid: RadiantId::default(),
                                     msg,
                                 });
 
                                 if let Err(_) = association_tx.send(new_msg) {
-                                //    tracing::error!("Error initiating next association step");
+                                    //    tracing::error!("Error initiating next association step");
                                 } else {
                                     tracing::trace!("Send voting message to rpc client handler");
-
                                 }
                             } else if resp.get_cluster_state() as i32
                                 == RadiantOrderState::ACTIVE as i32
@@ -223,7 +213,7 @@ impl RadiantController<'static> {
 
                                 let herald_info = resp.get_hid().clone();
 
-                                let new_msg = ClientCommand::HERALD(HeraldMsg{
+                                let new_msg = ClientCommand::HERALD(HeraldMsg {
                                     hid: herald_info,
                                     msg: Message::default(),
                                 });
@@ -231,7 +221,6 @@ impl RadiantController<'static> {
                                     //    tracing::error!("Error initiating next association step");
                                 } else {
                                     tracing::trace!("Send join message to herald (will relay to controller if not already incontroller state)");
-
                                 }
                             } else {
                                 tracing::trace!("Unhandled case");

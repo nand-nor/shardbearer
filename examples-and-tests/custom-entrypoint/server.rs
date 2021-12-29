@@ -11,15 +11,18 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
 
     if let Some(toml) = std::env::args().nth(1) {
-            let cfg = match shardbearer::config::parse_cfg(&toml) {
-                Ok(cfg) => cfg,
-                Err(e) => {
-                    tracing::error!("RadiantServer: Invalid config file provided: {:?}", e.to_string());
-                    std::process::exit(1);
-                }
-            };
+        let cfg = match shardbearer::config::parse_cfg(&toml) {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                tracing::error!(
+                    "RadiantServer: Invalid config file provided: {:?}",
+                    e.to_string()
+                );
+                std::process::exit(1);
+            }
+        };
 
-        shardbearer::server::radiant_server::<u64,u64>(cfg).await?;
+        shardbearer::server::radiant_server::<u64, u64>(cfg).await?;
     } else {
         tracing::error!("No config file provided");
         std::process::exit(1);
@@ -27,4 +30,3 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-

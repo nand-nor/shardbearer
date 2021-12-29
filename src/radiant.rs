@@ -1,25 +1,23 @@
-
-use tracing::{debug, error, info, trace, warn};
+use indexmap::IndexMap;
+use shardbearer_core::order::{OrderShardAction, RadiantOrderState};
 use shardbearer_core::radiant::{
     GroupID, MemberID, Radiant, RadiantKey, RadiantRole, RadiantState, RadiantStateError,
     RadiantStateMachine,
 };
-use shardbearer_core::system::{RadiantSystem, System};
-use indexmap::IndexMap;
-use shardbearer_core::order::{OrderShardAction, RadiantOrderState};
+use shardbearer_core::raft::RaftCfg;
+use shardbearer_core::raft::*;
 use shardbearer_core::shard::ShardKey;
 use shardbearer_core::system::SysState;
+use shardbearer_core::system::{RadiantSystem, System};
 use shardbearer_proto::common::common::Radiant as RadiantId;
-use shardbearer_core::raft::*;
-use shardbearer_core::raft::RaftCfg;
+use tracing::{debug, error, info, trace, warn};
 
 use raft::eraftpb::Message;
 
 pub type RadiantShardMap = Vec<ShardKey>;
 
-use crate::herald::{ControllerHeraldService, HeraldService};
 use crate::config::ShardbearerConfig;
-
+use crate::herald::{ControllerHeraldService, HeraldService};
 
 pub struct RadiantMsg {
     pub rid: RadiantId,
@@ -67,7 +65,7 @@ impl RadiantNode {
         }
     }
 
-    pub fn set_cfg(&mut self, cfg:  &ShardbearerConfig){
+    pub fn set_cfg(&mut self, cfg: &ShardbearerConfig) {
         self.mid = cfg.id();
     }
 }

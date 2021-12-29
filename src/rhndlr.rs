@@ -9,9 +9,9 @@ use crate::herald::{CtrlHeraldMsg, HeraldMsg};
 use crate::radiant::RadiantMsg;
 use crate::rctrl::StateMessage;
 
-use std::sync::{Arc,Mutex};
 use crate::radiant::RadiantNode;
 use raft::eraftpb::{Message, MessageType};
+use std::sync::{Arc, Mutex};
 
 pub enum ClientCommand {
     PEER(RadiantMsg),
@@ -49,30 +49,29 @@ impl RadiantRpcClientHandler {
         tracing::trace!("Dropping into RadiantRpcClientHandler event loop");
 
         loop {
-
             match self.cmd_rx.recv().await {
                 Some(v) => {
                     match v {
                         ClientCommand::PEER(/*RadiantMsg*/ msg) => {
                             tracing::trace!("RadiantRpcClientHandler: received peer message!");
-                            match msg.msg.get_msg_type(){
-                                MessageType::MsgRequestVote=>{
-                                    tracing::trace!("RadiantRpcClientHandler: request vote message!");
-
+                            match msg.msg.get_msg_type() {
+                                MessageType::MsgRequestVote => {
+                                    tracing::trace!(
+                                        "RadiantRpcClientHandler: request vote message!"
+                                    );
                                 }
-                                _=>{
+                                _ => {
                                     tracing::trace!("RadiantRpcClientHandler: other message type!");
-
                                 }
                             }
                         }
                         ClientCommand::HERALD(/*HeraldMsg*/ msg) => {
                             tracing::trace!("RadiantRpcClientHandler: received herald message!");
-
                         }
                         ClientCommand::CTRL(/*CtrlHeraldMsg*/ msg) => {
-                            tracing::trace!("RadiantRpcClientHandler: received controller message!");
-
+                            tracing::trace!(
+                                "RadiantRpcClientHandler: received controller message!"
+                            );
                         }
                     }
                 }

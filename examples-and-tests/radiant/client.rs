@@ -27,7 +27,7 @@ use indexmap::IndexMap;
 //use shardbearer::order::RadiantOrder;
 use shardbearer::rsvc::RadiantService;
 use shardbearer_core::shard::ShardEntry;
-use shardbearer_proto::common::common::{Beacon, OrderId, Order};
+use shardbearer_proto::common::common::{Beacon, Order, OrderId};
 
 use shardbearer_proto::radiant::radiant_grpc::{RadiantRpc, RadiantRpcClient};
 
@@ -72,9 +72,7 @@ async fn i_can_has_list(client: &RadiantRpcClient) -> Result<(), Box<dyn std::er
     //   res.await?;
 
     for bonk in res.members.iter().map(|x| x.clone()) {
-        info!(
-            "Order results: {:?}", bonk
-        );
+        info!("Order results: {:?}", bonk);
     }
     Ok(())
 }

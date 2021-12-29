@@ -51,7 +51,6 @@ pub struct RadiantService<K, V> {
     pub shard_map: Arc<Mutex<dyn ShardMap<K, V>>>,
 }
 
-
 impl<K, V> RadiantService<K, V> {
     pub fn new(
         radiant: Arc<Mutex<RadiantNode>>,
@@ -113,7 +112,10 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
         resp.set_neighbor(neighbor);
         resp.set_hid(herald);
 
-        tracing::trace!("RadiantService: Setting these vals for BeaconResponse: {:?}", resp);
+        tracing::trace!(
+            "RadiantService: Setting these vals for BeaconResponse: {:?}",
+            resp
+        );
 
         //this is not at all graceful :(
         //Check if this is a bootstrap beacon. If it is, we need to make sure the
@@ -199,7 +201,6 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
         gid: OrderId,
         sink: UnarySink<Order>,
     ) {
-
         tracing::trace!("RadiantService: received request to send current order members");
         let mut resp = Order::new();
         let gid = gid.get_gid();
