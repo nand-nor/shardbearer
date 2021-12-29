@@ -25,9 +25,9 @@ use indexmap::IndexMap;
 //use shardbearer_core::system::{RadiantSystem, SysState, System};
 
 //use shardbearer::order::RadiantOrder;
-use shardbearer::service::RadiantService;
+use shardbearer::rsvc::RadiantService;
 use shardbearer_core::shard::ShardEntry;
-use shardbearer_proto::common::common::Beacon;
+use shardbearer_proto::common::common::{Beacon, OrderId, Order};
 
 use shardbearer_proto::radiant::radiant_grpc::{RadiantRpc, RadiantRpcClient};
 
@@ -43,6 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = RadiantRpcClient::new(channel);
 
     perform_handshake(&client).await?;
+    i_can_has_list(&client).await?;
 
     Ok(())
 }
@@ -59,5 +60,21 @@ async fn perform_handshake(client: &RadiantRpcClient) -> Result<(), Box<dyn std:
         res.get_gid()
     );
 
+    Ok(())
+}
+
+async fn i_can_has_list(client: &RadiantRpcClient) -> Result<(), Box<dyn std::error::Error>> {
+    trace!("Async perform order member request");
+    let mut order = OrderId::new();
+    order.set_gid(0);
+
+    let res = client.current_order_membership_async(&order)?.await?;
+    //   res.await?;
+
+    for bonk in res.members.iter().map(|x| x.clone()) {
+        info!(
+            "Order results: {:?}", bonk
+        );
+    }
     Ok(())
 }

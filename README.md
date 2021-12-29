@@ -159,10 +159,7 @@ All nodes are `radiant`, e.g. `radiant` is the supertype trait that all nodes im
 All `heralds` are `radiant` but not all `radiants` are `heralds`
 All `radiants` belong to an `order`
 A `shard` controller `herald` is a radiant that belongs to an order but that has switched into a special `herald` mode
-to serve as the elected coordinator for all `shards` across all `orders`  
-
-So the relation `R` between `radiants` and `heralds` is transitive, non-reflexive, and non-symmetric (does this matter). 
- An interesting thing in Rust is the notion of variance and supertypes/subtypes so trying to play around with that. 
+to serve as the elected coordinator for all `shards` across all `orders`   
 
 ### Assigning Configuration Parameters
 
