@@ -11,6 +11,18 @@ fault tolerant/recoverable, decentralized, and autonomous.
 The general naming theme is inspired by [Brandon Sanderson's Stormlight Archive](https://www.brandonsanderson.com/) 
 book series. No spren were harmed in the making of this code
 
+## Project Status
+
+-[x] RPC definitions, service impls, data types, general structure \
+-[] System setup: bootstrapping, election (voting), role assignment (must handle all entry cases: new system, 
+multiple new joins, single new join) \
+-[] `shard` controller `herald` methods: load-rebalancing/system reconfig \
+-[] `shard` data replication within `orders` \
+-[] heartbeat checks and role-reassignment if needed \
+-[] benchmarking \
+-[] stress testing and performance tuning
+
+
 ## Project Description
 
 In the simplest terms, the `shardbearer` crate and the sub-crates within provide a framework for building and launching
