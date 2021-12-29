@@ -23,7 +23,6 @@ use std::collections::VecDeque;
 
 pub struct RaftNode {
     inner: RawNode<MemStorage>,
-    //proposals: Arx<Mutex<VeqDeque<Proposal>>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -72,8 +71,6 @@ impl RaftCfg {
     }
 }
 
-//let raft_group = RawNode::new(&cfg, storage, &logger).unwrap();
-//let raft_group = raft_group));
 
 impl RaftNode {
     pub fn new(rcfg: RaftCfg, logger: &slog::Logger) -> Result<Self, ()> {
@@ -108,30 +105,6 @@ impl RaftNode {
         Ok(Self { inner: node })
     }
 
-    //pub fn access_inner_mut(&mut self)->&mut RawNode<MemStorage>{
 
-    // }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RadiantRpcClientRequest {}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RadiantRpcClientResponse(Option<String>);
-
-#[derive(Clone, Debug, Error)]
-pub enum SystemStorageStatus {
-    #[error("system storage error")]
-    ERROR,
-}
-
-pub struct SystemStore {}
-
-/*
-#[async_trait]
-impl<A: AppData,R:AppDataResponse> RaftStorage<A,R> for RadiantSystem {
-    type Snapshot = Cursor<Vec<u8>>;
-    type ShutdownError = SystemStorageStatus;
-
-
-}*/

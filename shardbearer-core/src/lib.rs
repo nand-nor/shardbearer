@@ -1,6 +1,4 @@
-//pub mod controller;
 pub mod herald;
-//pub mod membership;
 pub mod cluster;
 pub mod order;
 pub mod radiant;
@@ -13,10 +11,3 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

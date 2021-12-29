@@ -1,6 +1,6 @@
 # Shardbearer: Sharded Storage Service
 
-:warning:!:warning:! :construction: THIS IS A WIP! :construction: !:warning:!:warning:
+:warning:!:warning:! :construction: THIS IS A WIP! Most features are still under development :construction: !:warning:!:warning:
 
 A for-fun-and-learning project where I attempt to build a distributed sharded storage service using the `raft` consensus algorithm.
 For the problem specification I am using this [distributed systems course 

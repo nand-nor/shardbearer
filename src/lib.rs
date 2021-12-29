@@ -19,11 +19,3 @@ pub mod rctrl;
 
 //service impls for all RPC service defines in shardbearer-proto
 pub mod service;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
