@@ -70,4 +70,4 @@ name="radiant_client"
 path="examples-and-tests/radiant/client.rs"
 
 [workspace]
-members = [ "shardbearer-proto", "shardbearer-core", "shardbearer-shardkv","." ]
+members = [ "shardbearer-proto", "shardbearer-core", "shardbearer-state","." ]

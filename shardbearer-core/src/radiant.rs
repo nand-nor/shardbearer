@@ -9,62 +9,13 @@ use thiserror::Error;
 pub type MemberID = u64;
 pub type GroupID = u64;
 
-#[derive(Clone)]
-pub enum RadiantRole {
-    UNASSOCIATED,
-    MEMBER(OrderRole),
-}
-
-impl Default for RadiantRole {
-    fn default() -> Self {
-        RadiantRole::UNASSOCIATED
-    }
-}
-
-#[derive(Clone)]
-pub enum OrderRole {
-    VOTER,
-    HERALD(HeraldRole),
-}
-
-impl Default for OrderRole {
-    fn default() -> Self {
-        OrderRole::VOTER
-    }
-}
-
-#[derive(Clone)]
-pub enum HeraldRole {
-    VOTER,
-    CONTROLLER,
-}
-
-impl Default for HeraldRole {
-    fn default() -> Self {
-        HeraldRole::VOTER
-    }
-}
-
 #[derive(Clone, Hash, Debug, Eq, PartialEq)]
 pub struct RadiantKey {
     pub gid: GroupID,
     pub mid: MemberID,
 }
 
-#[derive(Clone, Debug)]
-pub enum RadiantState {
-    UNASSOCIATED,
-    BOOTSTRAP,
-    VOTING,
-    ACTIVE,
-    LOCKED,
-    ERROR(RadiantStateError),
-}
-/*
-State transitions:
-Unassociated to bootstrap, bootstrap to voting, voting to active, if a new config
-gets meted out we set the state to LOCKED, if any error arises we set state to ERROR(val)
-*/
+
 
 //TODO add more of these later
 #[derive(Clone, Debug, Error)]
