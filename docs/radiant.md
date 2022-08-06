@@ -1,6 +1,15 @@
 # Radiant 
 
-# Bootstrapping: Execution flow
+## Internal State Machines
+
+### Top Level RPC Control
+This is the state machine that determines how a radiant handles RPCs from external nodes. External
+nodes in this case include `order` local, system local, and external nodes (e.g. nodes looking to join the system
+or the order)
+<img title = "Radiant State Machine" alt="Radiant State Machine-- see .dot file" src=docs/radiant_states.png>
+
+
+# Execution flow
 
 A server is loaded with a `radiant` binary compiled with the appropriate types for the key-value store. 
 Use the *.service definition to set up the binary to load & run at a specific time as part of something like `systemd`.
