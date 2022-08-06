@@ -1,0 +1,17 @@
+// Radiant State Machine
+digraph {
+	0 [label=RESET]
+	1 [label=UNASSOCIATED]
+	3 [label=ASSOCIATED]
+	2 [label=LOCKED]
+	4 [label=ERROR]
+	4 -> 4
+	2 -> 4
+	4 -> 0
+	0 -> 1
+	3 -> 2
+	2 -> 3
+	1 -> 4
+	3 -> 4
+	1 -> 3
+}

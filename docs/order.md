@@ -17,7 +17,7 @@ any major disruption in service or significant downtime taken to recreate previo
  
 ## Order states:
 
-<img title = "Order State Machine" alt="Order State Machine-- see .dot file" src=docs/order_states.png>
+<img title = "Order State Machine" alt="Order State Machine-- see .dot file" src=order_states.png>
 
 ``` 
 pub enum OrderState {
