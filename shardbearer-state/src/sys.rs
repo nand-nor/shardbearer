@@ -11,3 +11,15 @@ impl Default for SysState {
         SysState::INIT
     }
 }
+
+pub trait RadiantSystem{
+
+}
+
+pub trait HeraldSystem{
+
+}
+
+pub trait ShardbearerSystem{
+
+}
