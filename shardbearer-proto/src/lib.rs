@@ -3,23 +3,24 @@ extern crate grpcio;
 extern crate protobuf;
 
 pub mod herald {
-    include!(concat!("../proto/herald/bondsmith"));
+    include!(concat!("../proto/herald/mod.rs"));
 }
 
 pub mod radiant {
-    include!(concat!("../proto/radiant/bondsmith"));
+    include!(concat!("../proto/radiant/mod.rs"));
 }
-
+/*
 pub mod shard {
-    include!(concat!("../proto/shard/bondsmith"));
+    include!(concat!("../proto/shard/mod.rs"));
 }
+*/
 
-pub mod controller {
-    include!(concat!("../proto/bondsmith/bondsmith"));
+pub mod bondsmith {
+    include!(concat!("../proto/bondsmith/mod.rs"));
 }
 
 pub mod common {
-    include!(concat!("../proto/bondsmith"));
+    include!(concat!("../proto/mod.rs"));
 }
 
 #[cfg(test)]

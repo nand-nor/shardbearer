@@ -10,7 +10,7 @@ service RadiantRPC {
 
     rpc RadiantVote(Radiant)returns (Role){}
 
-    rpc CurrentRoles(Controller)returns(Roles){}
+    rpc CurrentRoles(Bondsmith)returns(Roles){}
 
     rpc CurrentOrderMembership(OrderId)returns(Order){}
 

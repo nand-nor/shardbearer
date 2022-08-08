@@ -1,4 +1,3 @@
-use std::env;
 extern crate protoc_grpcio;
 
 fn main() {

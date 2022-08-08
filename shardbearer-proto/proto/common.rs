@@ -3700,7 +3700,7 @@ impl ::protobuf::reflect::ProtobufValue for Roles {
 }
 
 #[derive(PartialEq,Clone,Default)]
-pub struct Controller {
+pub struct Bondsmith {
     // message fields
     pub cid: u64,
     // special fields
@@ -3708,14 +3708,14 @@ pub struct Controller {
     pub cached_size: ::protobuf::CachedSize,
 }
 
-impl<'a> ::std::default::Default for &'a Controller {
-    fn default() -> &'a Controller {
-        <Controller as ::protobuf::Message>::default_instance()
+impl<'a> ::std::default::Default for &'a Bondsmith {
+    fn default() -> &'a Bondsmith {
+        <Bondsmith as ::protobuf::Message>::default_instance()
     }
 }
 
-impl Controller {
-    pub fn new() -> Controller {
+impl Bondsmith {
+    pub fn new() -> Bondsmith {
         ::std::default::Default::default()
     }
 
@@ -3735,7 +3735,7 @@ impl Controller {
     }
 }
 
-impl ::protobuf::Message for Controller {
+impl ::protobuf::Message for Bondsmith {
     fn is_initialized(&self) -> bool {
         true
     }
@@ -3805,8 +3805,8 @@ impl ::protobuf::Message for Controller {
         Self::descriptor_static()
     }
 
-    fn new() -> Controller {
-        Controller::new()
+    fn new() -> Bondsmith {
+        Bondsmith::new()
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
@@ -3815,37 +3815,37 @@ impl ::protobuf::Message for Controller {
             let mut fields = ::std::vec::Vec::new();
             fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
                 "cid",
-                |m: &Controller| { &m.cid },
-                |m: &mut Controller| { &mut m.cid },
+                |m: &Bondsmith| { &m.cid },
+                |m: &mut Bondsmith| { &mut m.cid },
             ));
-            ::protobuf::reflect::MessageDescriptor::new_pb_name::<Controller>(
-                "Controller",
+            ::protobuf::reflect::MessageDescriptor::new_pb_name::<Bondsmith>(
+                "Bondsmith",
                 fields,
                 file_descriptor_proto()
             )
         })
     }
 
-    fn default_instance() -> &'static Controller {
-        static instance: ::protobuf::rt::LazyV2<Controller> = ::protobuf::rt::LazyV2::INIT;
-        instance.get(Controller::new)
+    fn default_instance() -> &'static Bondsmith {
+        static instance: ::protobuf::rt::LazyV2<Bondsmith> = ::protobuf::rt::LazyV2::INIT;
+        instance.get(Bondsmith::new)
     }
 }
 
-impl ::protobuf::Clear for Controller {
+impl ::protobuf::Clear for Bondsmith {
     fn clear(&mut self) {
         self.cid = 0;
         self.unknown_fields.clear();
     }
 }
 
-impl ::std::fmt::Debug for Controller {
+impl ::std::fmt::Debug for Bondsmith {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         ::protobuf::text_format::fmt(self, f)
     }
 }
 
-impl ::protobuf::reflect::ProtobufValue for Controller {
+impl ::protobuf::reflect::ProtobufValue for Bondsmith {
     fn as_ref(&self) -> ::protobuf::reflect::ReflectValueRef {
         ::protobuf::reflect::ReflectValueRef::Message(self)
     }
@@ -4462,15 +4462,15 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \"<\n\x04Role\x12\x10\n\x03gid\x18\x01\x20\x01(\x04R\x03gid\x12\x10\n\
     \x03mid\x18\x02\x20\x01(\x04R\x03mid\x12\x10\n\x03rid\x18\x03\x20\x01(\
     \x04R\x03rid\"$\n\x05Roles\x12\x1b\n\x05roles\x18\x01\x20\x03(\x0b2\x05.\
-    RoleR\x05roles\"\x1e\n\nController\x12\x10\n\x03cid\x18\x01\x20\x01(\x04\
-    R\x03cid\"\x96\x01\n\x10ShardMoveRequest\x12\x10\n\x03sid\x18\x01\x20\
-    \x01(\x04R\x03sid\x12\x0e\n\x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\
-    \x04port\x18\x03\x20\x01(\rR\x04port\x12\x12\n\x04size\x18\x04\x20\x01(\
-    \x04R\x04size\x12\x19\n\x08key_type\x18\x05\x20\x01(\tR\x07keyType\x12\
-    \x1d\n\nvalue_type\x18\x06\x20\x01(\tR\tvalueType\"V\n\x18ShardMoveReque\
-    stResponse\x12\x16\n\x06result\x18\x01\x20\x01(\x08R\x06result\x12\x0e\n\
-    \x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x03\x20\x01(\rR\
-    \x04portb\x06proto3\
+    RoleR\x05roles\"\x1d\n\tBondsmith\x12\x10\n\x03cid\x18\x01\x20\x01(\x04R\
+    \x03cid\"\x96\x01\n\x10ShardMoveRequest\x12\x10\n\x03sid\x18\x01\x20\x01\
+    (\x04R\x03sid\x12\x0e\n\x02ip\x18\x02\x20\x01(\tR\x02ip\x12\x12\n\x04por\
+    t\x18\x03\x20\x01(\rR\x04port\x12\x12\n\x04size\x18\x04\x20\x01(\x04R\
+    \x04size\x12\x19\n\x08key_type\x18\x05\x20\x01(\tR\x07keyType\x12\x1d\n\
+    \nvalue_type\x18\x06\x20\x01(\tR\tvalueType\"V\n\x18ShardMoveRequestResp\
+    onse\x12\x16\n\x06result\x18\x01\x20\x01(\x08R\x06result\x12\x0e\n\x02ip\
+    \x18\x02\x20\x01(\tR\x02ip\x12\x12\n\x04port\x18\x03\x20\x01(\rR\x04port\
+    b\x06proto3\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
