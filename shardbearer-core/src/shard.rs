@@ -1,7 +1,28 @@
 use indexmap::{map, IndexMap}; //, Entry};
 use std::boxed::Box;
 
-pub type ShardKey = u64;
+pub type ShardKey = usize;
+
+/*pub trait ShardKey: std::hash::Hash + Eq {
+
+}
+*/
+
+pub type ShardGroupKey = usize;
+
+pub trait ShardAction {
+
+}
+
+/// Some way to represent the load a group currently bears
+/// with respect to the shards it is holding at the level of
+/// the `Bondsmith`, to dynamically determine if load rebalancing
+/// is needed
+/// TODO revisit this
+pub struct ShardLoad{
+    size_bytes: usize,
+    capacity_bytes: usize
+}
 
 pub trait Shard<K, V>: Send + Sync {
     fn remove(&mut self, key: K) -> Result<V, ()>;
@@ -81,6 +102,7 @@ impl<K: std::hash::Hash + Eq, V: Clone> ShardEntry<K, V> {
         self.entry.entry(key).or_insert(val);
     }
 }
+
 /*
 use indexmap::IndexMap;
 
