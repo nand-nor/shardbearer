@@ -2,7 +2,7 @@ extern crate protobuf;
 extern crate futures;
 extern crate grpcio;
 
-pub mod controller;
-pub mod controller_grpc;
+pub mod bondsmith;
+pub mod bondsmith_grpc;
 
 use super::common::*;

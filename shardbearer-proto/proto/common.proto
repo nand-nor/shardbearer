@@ -107,7 +107,7 @@ message Roles {
     repeated Role roles = 1;
 }
 
-message Controller {
+message Bondsmith {
     uint64 cid = 1;
 }
 
