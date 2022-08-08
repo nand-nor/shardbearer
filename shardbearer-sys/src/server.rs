@@ -16,15 +16,15 @@ use tracing::{debug, error, info, trace, warn, Level};
 use tracing_subscriber;
 
 use shardbearer_proto::common::common::{
-    Beacon, BeaconResponse, ConfigId, ConfigSummary, Controller, HeraldInfo, JoinGroup, LeaveGroup,
+    Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
     Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
 
 use crate::rsvc::RadiantService;
 
 use crate::config::ShardbearerConfig;
-use crate::rctrl::{RadiantController, StateMessage};
-use crate::rhndlr::RadiantRpcClientHandler;
+use crate::rctrl::{RadiantCtrl};
+use crate::rpc_cli_handler::RadiantRpcClientHandler;
 
 use shardbearer_core::consensus::ShardbearerConsensus;
 use shardbearer_core::consensus::ShardbearerReplication;
@@ -37,7 +37,7 @@ use shardbearer_state::radiant::{RadiantStateMachine, RadiantState};
 
 
 
-use shardbearer_proto::controller::controller_grpc::HeraldControllerRpc;
+use shardbearer_proto::bondsmith::bondsmith_grpc::BondsmithRpc;
 use shardbearer_proto::herald::herald_grpc::HeraldRpc;
 use shardbearer_proto::radiant::radiant_grpc::{create_radiant_rpc, RadiantRpc};
 use std::convert::TryInto;

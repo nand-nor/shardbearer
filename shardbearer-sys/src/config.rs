@@ -17,7 +17,7 @@ pub struct ShardbearerConfig {
     neighbor_port: u16,
     bootstrap_backoff: u64,
     consensus_cfg: ConsensusCfg,
-    replication_cfg: Option<dyn ReplicationCfg>,
+    //replication_cfg: Option<dyn ReplicationCfg<>>,
     runtime: Option<RuntimeCfg>,
 }
 
@@ -64,9 +64,9 @@ impl ShardbearerConfig {
    //     self.replication_cfg.replication_max_bytes()
    // }
 
-    pub fn rep_cfg(&self)->Option<dyn ReplicationCfg>{
-        self.replication_cfg
-    }
+  //  pub fn rep_cfg(&self)->Option<dyn ReplicationCfg>{
+    //    self.replication_cfg
+    //}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

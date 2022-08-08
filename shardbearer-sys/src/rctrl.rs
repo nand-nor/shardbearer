@@ -1,21 +1,21 @@
 use crate::config::ShardbearerConfig;
-use crate::rpc_client_handler::{ClientCommand, RadiantRpcClientHandler};
+use crate::rpc_cli_handler::{RadiantRpcClientHandler};
 
 use shardbearer_state::bondsmith::BondsmithState;
 use shardbearer_state::order::OrderState;
 use shardbearer_state::radiant::{RadiantState, RadiantStateMachine};
 use shardbearer_state::sys::{RadiantSystem, SysState};
 
-use shardbearer_core::radiant::{RadiantMsg, RadiantNode};
+use shardbearer_core::radiant::{RadiantNode};
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 use shardbearer_core::msg::*;
-use shardbearer_core::{RadiantRole,HeraldRole,ControllerRole};
+use shardbearer_core::{RadiantRole,HeraldRole};
 use shardbearer_proto::common::common::{BeaconResponse, Radiant as RadiantId};
-
+use crate::rpc_cli_handler;
 
 use timer::{Guard, Timer};
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Receiver};
+//use std::sync::mpsc::{channel as stdchannel, Receiver as StdReceiver};
 use protobuf::Message;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -53,7 +53,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
         mut trigger_rx: Receiver<()>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let (tx_drop, mut rx) = channel();
-        RadiantCtrl::initial_association(guard, rx).await?;
+        RadiantCtrl::<K,C,R>::initial_association(guard, rx).await?;
 
         tokio::spawn(async move {
             match trigger_rx.recv().await {
@@ -121,7 +121,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
 
         let guard =
             timer.schedule_repeating(chrono::Duration::milliseconds(backoff as _), move || {
-                match crate::client::handshake(
+                match rpc_cli_handler::handshake(
                     neighbor_ip.clone(),
                     neighbor_port.clone(),
                     closure_tx.clone(),
@@ -132,7 +132,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
             });
 
         tokio::spawn(async move {
-            if let Err(_) = RadiantCtrl::bootstrap(guard, trigger_rx).await {
+            if let Err(_) = RadiantCtrl::<K,C,R>::bootstrap(guard, trigger_rx).await {
                 tracing::error!("Error running bootstrap setup steps");
             }
         });
@@ -146,16 +146,16 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                     match v {
                         StateMessage::INITSTATE(resp) => {
                             tracing::trace!("Received a BeaconResp: {:?}", resp);
-                            if (resp.get_neighbor().get_ip() == ip
+                           /* if (resp.get_neighbor().get_ip() == ip
                                 && resp.get_neighbor().get_port() == port as u32
-                                && resp.get_cluster_state() as i32
-                                != RadiantOrderState::VOTING as i32
-                                && resp.get_cluster_state() as i32
-                                != RadiantOrderState::RESETLOCK as i32)
-                                || resp.get_cluster_state() as i32
-                                == RadiantOrderState::ACTIVE as i32
-                                || resp.get_cluster_state() as i32
-                                == RadiantOrderState::INACTIVE as i32
+                                && resp.get_cluster_state()
+                                != OrderState::VOTING
+                                && resp.get_cluster_state()
+                                != OrderState::RESETLOCK )
+                                || resp.get_cluster_state()
+                                == OrderState::ACTIVE
+                                || resp.get_cluster_state()
+                                == OrderState::INACTIVE
                             {
                                 tracing::trace!("Triggering timer drop");
 
@@ -164,39 +164,40 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                                 }
                             }
 
-                            if resp.get_cluster_state() as i32 == RadiantOrderState::VOTING as i32
-                                || resp.get_cluster_state() as i32
-                                == RadiantOrderState::RESETLOCK as i32
+                            if resp.get_cluster_state()  == OrderState::VOTING
+                                || resp.get_cluster_state()
+                                == OrderState::RESETLOCK
                             {
                                 tracing::trace!(
                                     "System is locked, keep trying system state changes"
                                 );
-                            } else if resp.get_cluster_state() as i32
-                                == RadiantOrderState::INACTIVE as i32
+                            } else if resp.get_cluster_state()
+                                == OrderState::INACTIVE
                             {
                                 // let assoc = Association{
                                 /*  match self.radiant.lock() {
-                                    Ok(mut g) => (g.update_order_state(RadiantOrderState::VOTING)),
+                                    Ok(mut g) => (g.update_order_state(OrderState::VOTING)),
                                     Err(_) => {
                                         tracing::error!("System error getting mutex guard, failure to update state to voting");
                                     },
                                 };
                                 // };*/
-
+/*
                                 let mut msg = Message::default();
-                                msg.set_msg_type(MessageType::MsgRequestVote);
-                                let new_msg = ClientCommand::PEER(RadiantMsg {
+                               // msg.set_msg_type(MsgRequestVote);
+
+                                let new_msg = ClientCommand::PEER(Box::new(RadiantMsg {
                                     rid: RadiantId::default(),
                                     msg,
-                                });
+                                }));
 
                                 if let Err(_) = association_tx.send(new_msg) {
                                     //    tracing::error!("Error initiating next association step");
                                 } else {
                                     tracing::trace!("Send voting message to rpc client handler");
-                                }
-                            } else if resp.get_cluster_state() as i32
-                                == RadiantOrderState::ACTIVE as i32
+                                }*/
+                            } else if resp.get_cluster_state()
+                                == OrderState::ACTIVE
                             {
                                 //&& resp.get_join_success() {
                                 tracing::trace!(
@@ -207,18 +208,18 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
 
                                 let herald_info = resp.get_hid().clone();
 
-                                let new_msg = ClientCommand::HERALD(HeraldMsg {
+                           /*     let new_msg = ClientCommand::HERALD(Box::new(HeraldMsg {
                                     hid: herald_info,
-                                    msg: Message::default(),
-                                });
+                                    msg: Message::new(),//default(),
+                                }));
                                 if let Err(_) = association_tx.send(new_msg) {
                                     //    tracing::error!("Error initiating next association step");
                                 } else {
                                     tracing::trace!("Send join message to herald (will relay to bondsmith if not already incontroller state)");
-                                }
+                                }*/
                             } else {
                                 tracing::trace!("Unhandled case");
-                            }
+                            }*/
                         }
                         StateMessage::VOTESTATE(resp) => {}
                         StateMessage::SYSSTATE(s) => {
@@ -231,7 +232,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                         }
                         StateMessage::ORDERSTATE(s) => {
                             match s {
-                                RadiantOrderState::INACTIVE => {}
+                                OrderState::ACTIVE => {}
                                 _ => {
                                     //unimplemented
                                 }
@@ -239,10 +240,9 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                         }
                         StateMessage::RADIANTSTATE(m) => {
                             match m {
+                                RadiantState::RESET => {}
                                 RadiantState::UNASSOCIATED => {}
-                                RadiantState::BOOTSTRAP => {}
-                                RadiantState::VOTING => {}
-                                RadiantState::ACTIVE => {}
+                                RadiantState::ASSOCIATED => {}
                                 RadiantState::LOCKED => {}
                                 RadiantState::ERROR(state_error) => {}
                                 _ => {
@@ -262,7 +262,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                         StateMessage::ORDERHERALDSTATE(h) => {
                             match h {
                                 HeraldRole::VOTER => {}
-                                HeraldRole::CONTROLLER => {}
+                                HeraldRole::BONDSMITH => {}
                             };
                         }
                         StateMessage::BONDSMITHSTATE(h) => {
@@ -274,14 +274,18 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
                         }
                         /*   StateMessage::CLUSTERSTATE(s) => {
                                match s {
-                                   RadiantOrderState::INACTIVE => {}
+                                   OrderState::INACTIVE => {}
                                    _ => {
                                        //unimplemented
                                    }
                                };
                            }
                        };*/
-                        //   break;
+                        //
+                        // break;
+                        StateMessage::CLUSTERSTATE(m)=>{
+                            unimplemented!();
+                        }
                     };
                 },
                     None => tracing::error!("sthe sender dropped! oh gawd error error error"),

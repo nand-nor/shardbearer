@@ -1,5 +1,5 @@
 
-use shardbearer_proto::controller::controller_grpc::BondsmithRpcClient;
+use shardbearer_proto::bondsmith::bondsmith_grpc::BondsmithRpcClient;
 use shardbearer_proto::herald::herald_grpc::HeraldRpcClient;
 use shardbearer_proto::common::common::{Beacon, BeaconResponse};
 use shardbearer_proto::radiant::radiant_grpc::RadiantRpcClient;
@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use tracing;
 use grpcio::{ChannelBuilder, Environment};
 
+use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 
 use crate::rctrl::*;//StateMessage;
 
@@ -54,7 +55,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantRpcClientHand
                     match v {
                         ClientCommand::PEER(/*RadiantMsg*/ msg) => {
                             tracing::trace!("RadiantRpcClientHandler: received peer message!");
-                            match msg.msg.get_msg_type() {
+                          /*  match msg.msg.get_msg_type() {
                                 MessageType::MsgRequestVote => {
                                     tracing::trace!(
                                         "RadiantRpcClientHandler: request vote message!"
@@ -62,8 +63,9 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantRpcClientHand
                                 }
                                 _ => {
                                     tracing::trace!("RadiantRpcClientHandler: other message type!");
+
                                 }
-                            }
+                            }*/
                         }
                         ClientCommand::HERALD(/*HeraldMsg*/ msg) => {
                             tracing::trace!("RadiantRpcClientHandler: received herald message!");
@@ -154,7 +156,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantRpcClientHand
     ) {
         self.reset_radiant(rip, rport);
         self.reset_herald(hip, hport);
-        self.reset_controller(cip, cport);
+        self.reset_bondsmith(cip, cport);
     }
 
     pub fn reset_radiant(&mut self, ip: String, port: u16) {
@@ -165,9 +167,9 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantRpcClientHand
         self.drop_herald_client();
         self.setup_herald_client(ip, port);
     }
-    pub fn reset_controller(&mut self, ip: String, port: u16) {
-        self.drop_ctrl_client();
-        self.setup_ctrl_client(ip, port);
+    pub fn reset_bondsmith(&mut self, ip: String, port: u16) {
+        self.drop_bondsmith_client();
+        self.setup_bondsmith_client(ip, port);
     }
 }
 

@@ -13,6 +13,6 @@ pub mod rpc_cli_handler;
 pub mod rsvc;
 //top level server function calls to create & run all needed objects
 //within a tokio runtime
-pub mod server;
+//pub mod server;
 
 //pub mod utils;

@@ -11,26 +11,28 @@ use grpcio::{
     ServerBuilder,
     UnarySink,
 };
-use protobuf;
+use protobuf::Message;
 use tracing::{debug, error, info, trace, warn};
 //use tracing_subscriber;
 
 use shardbearer_proto::common::common::{
-    Beacon, BeaconResponse, ConfigId, ConfigSummary, Controller, HeraldInfo, JoinGroup, LeaveGroup,
+    Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
     Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
 //use shardbearer_proto::radiant::radiant::*;
+use shardbearer_state::radiant::RadiantStateMachine;
 
 use crate::config::ShardbearerConfig;
 //use crate::radiant::RadiantNode;
-use crate::rctrl::{RadiantController, StateMessage};
-use crate::rhndlr::RadiantRpcClientHandler;
-use shardbearer_core::order::RadiantOrderState;
+use crate::rctrl::{RadiantCtrl};
+use crate::rpc_cli_handler::RadiantRpcClientHandler;
+use shardbearer_state::order::OrderState;
+
 use shardbearer_core::radiant::{Radiant, RadiantNode};// RadiantStateMachine};
 use shardbearer_core::shard::{ShardHashMap, /*Shard, ShardEntry, ShardKey,*/ ShardMap};
-//use shardbearer_core::system::RadiantSystem;
+use shardbearer_core::msg::*;
 
-use shardbearer_proto::controller::controller_grpc::BondsmithRpc;
+use shardbearer_proto::bondsmith::bondsmith_grpc::BondsmithRpc;
 use shardbearer_proto::herald::herald_grpc::HeraldRpc;
 use shardbearer_proto::radiant::radiant_grpc::{create_radiant_rpc, RadiantRpc};
 use std::convert::TryInto;
@@ -39,8 +41,7 @@ use std::convert::TryInto;
 
 use tokio::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
-use shardbearer_core::consensus::ShardbearerConsensus;
-use shardbearer_core::consensus::ShardbearerReplication;
+use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 
 #[derive(Clone)]
 pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> {
@@ -101,12 +102,12 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for Ra
         let mut herald = self.herald.clone(); //HeraldInfo::new();
         let (gid, mid, state) = match self.radiant.lock() {
             Ok(g) => (g.group_id(), g.member_id(), g.order_state()),
-            Err(_) => (0, 0, RadiantOrderState::INACTIVE),
+            Err(_) => (0, 0, OrderState::RESET)//ERROR),
         };
 
         neighbor.set_ip(self.neighbor.get_ip().to_string());
         neighbor.set_port(self.neighbor.get_port());
-        resp.set_cluster_state(state as _);
+        //resp.set_cluster_state(state as u32 );
 
         resp.set_mid(mid);
         resp.set_gid(gid);
@@ -134,7 +135,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for Ra
                             Ok(mut g) => {
                                 //TODO make this another send on the control channel, the bondsmith
                                 //should be the only thing updating state?
-                                g.update_cluster_state(RadiantOrderState::VOTING);
+                               // g.update_cluster_state(OrderState::VOTING);
                             }
                             Err(_) => {}
                         };
@@ -186,7 +187,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for Ra
         ctx.spawn(f)
     }
 
-    fn current_roles(&mut self, ctx: RpcContext<'_>, ctrl: Controller, sink: UnarySink<Roles>) {
+    fn current_roles(&mut self, ctx: RpcContext<'_>, ctrl: Bondsmith, sink: UnarySink<Roles>) {
         let resp = Roles::new();
 
         let f = sink
@@ -235,7 +236,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for Ra
         ctx.spawn(f)
     }
 }
-
+/*
 impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> HeraldRpc for RadiantService<C,R,K, V> {
     fn herald_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantID, sink: UnarySink<Roles>) {
         let resp = Roles::new();
@@ -282,3 +283,4 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> BondsmithRpc for 
         ctx.spawn(f)
     }
 }
+*/
