@@ -44,7 +44,7 @@ use shardbearer_core::consensus::ShardbearerReplication;
 
 #[derive(Clone)]
 pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> {
-    pub radiant: Arc<Mutex<RadiantNode<C,R>>>,
+    pub radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
     pub neighbor: RadiantID,
     setup: bool,
     pub ctrl_chan_tx: UnboundedSender<StateMessage>,
@@ -54,7 +54,7 @@ pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K,
 
 impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantService<C,R,K, V> {
     pub fn new(
-        radiant: Arc<Mutex<RadiantNode<C,R>>>,
+        radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
         shard_store: Arc<Mutex<dyn ShardMap<K, V>>>,
         cfg: ShardbearerConfig,
         bootstrap: UnboundedSender<StateMessage>,
