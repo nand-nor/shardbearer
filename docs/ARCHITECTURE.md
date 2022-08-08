@@ -1,6 +1,32 @@
 
 
-### Architecture
+# Architecture
+
+## General Runtime Execution Structure 
+
+The system assumes that there is no less than 3 nodes, and will tolerate some amount of waiting for system startup 
+across nodes (i.e. a node will not  immediately exit if no responses are received to broadcast probes).
+
+The services shall run in separate process spaces, 
+
+
+The `shardbearer` system uses a hierarchy of roles, similar to a tiering system, to coordinate activities 
+within the system. 
+
+System roles are defined as traits that are then wrapped into services, and combined with `protobuf` `gRPC` 
+implementations to structure external communication among nodes in the system. A single node will run multiple
+services depending on it's role, for now these are part of a single process space, two synchronous thread pools
+that each launch their own tokio runtime to execute asynchronously within their own execution context. (Eventually
+want services run as distinct processes on any given node server, and interact locally via *nix sockets when needed. 
+Services will eventually execute with respect to each other locally in a synchronous manner as distinct thread groups, 
+and each executes it's threadpool asynchronously using the tokio runtime. )
+
+## System Roles
+
+The system is comprised of `radiants`, `heralds`, and a controlling `herald` called
+the `bondsmith`. 
+
+
 
 The main components giving structure to this system are `shards`, `radiants`, `orders`, and `heralds`.
 
@@ -38,11 +64,34 @@ The main components giving structure to this system are `shards`, `radiants`, `o
 
 *later optimizations will treat this in a more complex way e.g. not fixed/the same across the whole system
 
-The `shard` controller `herald` is responsible for managing configuration: as new servers (`radiants`) enter and
-leave the system, `shards` must be redistributed to balance the load dynamically. In this way, the `shard` controller
-`herald` provides the needed information to the `orders` (replica groups) to determine what `shards` to serve.
-The `shard` controller `herald` also acts as a client gateway: clients consult the `shard` controller to be routed
-to the `order` responsible for the `shard` they are attempting to read/write.
+The `bondsmith` or the big boss `shard` controller `herald` is responsible for managing configuration: as new 
+servers (`radiants`) enter and leave the system, `shards` must be redistributed to balance the load dynamically. 
+In this way, the `shard` controller `herald` provides the needed information to the `orders` (replica groups) to 
+determine what `shards` to serve. The `shard` controller `herald` also acts as a client gateway: clients 
+consult the `shard` controller to be routed to the `order` responsible for the `shard` they are attempting to 
+read/write. 
+
+
+
+
+In terms of variance, each node in the system implements a trait that represents the `radiant` role. 
+
+Groups of `radiants` are assigned `shards`, and for each `shard` group a `herald` must be elected. A `herald` is in charge of a shard group, and coordinate the
+activity of `radiants` within the `shard` group, mostly relating to moving shards, or fracturing/consolidating
+`shards`. The `bondsmith` coordinates the activity of the whole system, communicating with `heralds` to perform
+things like load balancing (fracturing large `shards` and assigning new `shards` to an established group, for example).
+
+
+
+The top level controller `bondsmith` represents the main entrypoint for receiving client
+requests & therefore a node must be assigned this role prior to system bring up. Similar to a 3 tiered system,
+the `bondsmith` behaves somewhat like tier 1. The `heralds` in this system behave similarly to tier 2, and the `radiants` tier 3.
+
+
+
+These roles-as-traits establish a system of variance that defines the way any given node will function with respect
+to the rest of the system. For more type system variance details relating to system roles, see [Variance: System Roles and Relationships](#variance-system-roles-and-relationships)
+
 
 #### Variance: System Roles and Relationships
 
@@ -63,6 +112,11 @@ The following relationships hold:
   the minimum size of any `order` must be 3.)
 
 #### System Bootstrapping, Elections, and Role Assignment
+
+
+During system bring up there is a bootstrapping period wherein system membership, `shard` group
+formation, and role election is performed.
+
 For this reason, on system bootstrap, the voting order (from the pool of all currently registered `radiants`) and
 establishment of memberships etc., is:
 1. Bootstrap members initiate a vote to elect `shard` controlling `herald`
