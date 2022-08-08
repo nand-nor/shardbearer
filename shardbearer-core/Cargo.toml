@@ -17,4 +17,4 @@ bincode = "1.3.3"
 thiserror = "1.0"
 #protobuf = { version = "2.0"}
 #shardbearer-proto = { path = "../shardbearer-proto", version = "0.1.0"}
-shardbearer-state = { path = "../shardbearer-state", version = "0.1.0"}
+#shardbearer-state = { path = "../shardbearer-state", version = "0.1.0"}

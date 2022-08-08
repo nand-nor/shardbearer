@@ -1,4 +1,3 @@
-use crate::msg::*;
 use crate::shard::*;
 use crate::radiant::{Radiant, RadiantNode};
 use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};

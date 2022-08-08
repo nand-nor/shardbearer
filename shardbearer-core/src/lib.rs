@@ -3,7 +3,6 @@ pub mod herald;
 pub mod order;
 pub mod radiant;
 pub mod shard;
-pub mod msg;
 pub mod bondsmith;
 pub mod sys;
 

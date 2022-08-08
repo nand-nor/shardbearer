@@ -14,6 +14,10 @@ pub trait ShardAction {
 
 }
 
+pub trait ShardbearerMessage { //: Sized {
+
+}
+
 /// Some way to represent the load a group currently bears
 /// with respect to the shards it is holding at the level of
 /// the `Bondsmith`, to dynamically determine if load rebalancing
