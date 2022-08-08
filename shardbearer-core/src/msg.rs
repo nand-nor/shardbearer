@@ -1,5 +1,13 @@
 use protobuf::Message;
-
+use shardbearer_state::radiant::*;
+use shardbearer_state::bondsmith::*;
+use shardbearer_state::order::*;
+use shardbearer_state::sys::*;
+use std::boxed::Box;
+use shardbearer_proto::common::common::{
+    Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
+    Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
+};
 
 pub struct BondsmithMsg {
     pub hid: HeraldInfo,
@@ -13,14 +21,14 @@ pub struct HeraldMsg {
 
 
 pub struct RadiantMsg {
-    pub rid: RadiantId,
+    pub rid: RadiantID,
     pub msg: dyn Message,
 }
 
 pub enum ClientCommand {
-    PEER(RadiantMsg),
-    HERALD(HeraldMsg),
-    CTRL(CtrlHeraldMsg),
+    PEER(Box<RadiantMsg>),
+    HERALD(Box<HeraldMsg>),
+    CTRL(Box<BondsmithMsg>),
 }
 
 pub struct Vote{}

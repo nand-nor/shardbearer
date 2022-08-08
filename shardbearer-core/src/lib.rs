@@ -4,6 +4,7 @@ pub mod order;
 pub mod radiant;
 pub mod shard;
 pub mod msg;
+pub mod bondsmith;
 
 
 #[derive(Clone)]

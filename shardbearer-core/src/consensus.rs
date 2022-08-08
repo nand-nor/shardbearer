@@ -30,15 +30,15 @@ impl ConsensusCfg {
     pub fn heartbeat_interval(&self) -> u64 {
         self.heartbeat_interval
     }
-    pub fn replication_max_bytes(&self) -> usize {
-        self.replication_max_bytes
-    }
+    //pub fn replication_max_bytes(&self) -> usize {
+     //   self.replication_max_bytes
+    //}
 }
 
 /// The `ReplicationCfg` trait is an optional configuration parameter that enables
 /// the use of additional params for setting up consensus/replication
 /// in a generic shardbearder system
-pub trait ReplicationCfg: Serialize + Deserialize + Clone  {
+pub trait ReplicationCfg{//: Serialize + Deserialize + Clone  {
     type ConfigParams;
     type ReplicationLimits;
 

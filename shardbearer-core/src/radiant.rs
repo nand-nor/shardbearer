@@ -1,7 +1,10 @@
 use crate::shard::{Shard, ShardKey, ShardEntry, ShardAction, ShardGroupKey};
-use crate::config::ShardbearerConfig;
-use crate::herald::HeraldService;
-use crate::controller::BondsmithService;
+//use crate::config::ShardbearerConfig;
+use crate::herald::{HeraldNode, Herald};
+use crate::bondsmith::{BondsmithNode, Bondsmith};
+
+use crate::shard::ShardLoad;
+
 use crate::consensus::ShardbearerConsensus;
 use crate::consensus::ShardbearerReplication;
 use crate::msg::*;
@@ -13,9 +16,10 @@ use shardbearer_proto::common::common::{Radiant as RadiantId, Timestamp};
 
 use tokio::sync::mpsc::{UnboundedSender,UnboundedReceiver};
 use protobuf::Message;
-use thiserror::Error;
 use indexmap::IndexMap;
 use tracing::{debug, error, info, trace, warn};
+
+use shardbearer_state::radiant::RadiantStateMachine;
 
 
 
@@ -157,8 +161,8 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
 
     //Channels connecting one or more threads to ports opened up for comms
     //to & from shard members. Open a port for each new/existing member
-    shard_members_tx: IndexMap<MemberID, UnboundedSender<RadiantMsg>>,
-    shard_members_rx: IndexMap<MemberID, UnboundedReceiver<RadiantMsg>>,
+    shard_members_tx: IndexMap<MemberID, UnboundedSender<Box<RadiantMsg>>>,
+    shard_members_rx: IndexMap<MemberID, UnboundedReceiver<Box<RadiantMsg>>>,
 /*
     //Channels connecting one or more threads to ports opened up for comms
     //to & from herald. Open a port for each new/existing member
@@ -179,9 +183,9 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
     shards: IndexMap<ShardGroupKey, GroupID>,
 
     /// Will instantiate if this particular service instance is elected herald
-    hsvc: Option<HeraldNode<K>>,
+    hsvc: HeraldNode<K>,
     /// Will instantiate if this particular service instance is elected herald bondsmith
-    ctrlsvc: Option<BondsmithNodee<K>>,
+    ctrlsvc: Option<BondsmithNode>,
 
     consensus: Option<C>,
     replication: Option<R>,
@@ -206,6 +210,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantNode<K, C,R> 
             //Channels connecting one or more threads to ports opened up for comms
             //to & from herald. Open a port for each new/existing member
           /*
+
             shard_heralds_rx: UnboundedReceiver::<RadiantMsg>::default(),
             shard_heralds_tx: UnboundedSender::<RadiantMsg>::default(),
 
@@ -218,18 +223,18 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantNode<K, C,R> 
             order_herald: 0,
             order_members: Vec::new(),
             shards: IndexMap::new(),
-            hsvc: None,
-            ctrlsvc: None,
+            hsvc: HeraldNode::<K>::default(),
+            ctrlsvc: None::<BondsmithNode>,
             consensus: None,
             replication: None,
             watermark: Timestamp::default(),
         }
     }
 
-    pub fn set_cfg(&mut self, cfg: &ShardbearerConfig) {
-        self.mid = cfg.id();
+   // pub fn set_cfg(&mut self, cfg: &ShardbearerConfig) {
+    //    self.mid = cfg.id();
         //todo
-    }
+    //}
 }
 
 
@@ -300,20 +305,20 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantGroupMgmt fo
     type GroupId = GroupID;
     type MemberId = MemberID;
 
-    type ShardMemberDataTx = UnboundedSender<RadiantMsg>;
-    type ShardMemberDataRx = UnboundedReceiver<RadiantMsg>;
+    type ShardMemberDataTx = UnboundedSender<Box<RadiantMsg>>;
+    type ShardMemberDataRx = UnboundedReceiver<Box<RadiantMsg>>;
     type MemberListType = RadiantId;
 
-    type HeraldMemberDataTx = UnboundedSender<RadiantMsg>;
-    type HeraldMemberDataRx = UnboundedReceiver<RadiantMsg>;
+    type HeraldMemberDataTx = UnboundedSender<Box<HeraldMsg>>;
+    type HeraldMemberDataRx = UnboundedReceiver<Box<HeraldMsg>>;
     type HeraldMemberListType = RadiantId;
 
     fn add_shard_group_member(
         &mut self,
         mid: Self::MemberId,
         member_data: Self::MemberListType,
-        tx: Self::MemberDataTx,
-        rx: Self::MemberDataRx,
+        tx: Self::ShardMemberDataTx,
+        rx: Self::ShardMemberDataRx,
     ) -> Result<(), ()> {
         self.shard_members_tx.entry(mid).or_insert(tx);
         self.shard_members_rx.entry(mid).or_insert(rx);
@@ -338,11 +343,9 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantGroupMgmt fo
         tx: Self::HeraldMemberDataTx,
         rx: Self::HeraldMemberDataRx,
     ) -> Result<(), ()>{
-        if self.hsvc.is_none(){
-            return Err(())
-        }
-        self.hsvc.unwrap().herald_peers_tx.entry(mid).or_insert(tx);
-        self.hsvc.unwrap().herald_peers_rx.entry(mid).or_insert(rx);
+
+        self.hsvc.herald_peers_tx.entry(mid).or_insert(tx);
+        self.hsvc.herald_peers_rx.entry(mid).or_insert(rx);
         //self.order_members.push(member_data);
         Ok(())
     }
@@ -352,9 +355,7 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantGroupMgmt fo
         mid: Self::MemberId,
         member_data: Self::HeraldMemberListType,
     ) -> Result<Self::MemberId, ()>{
-        if self.hsvc.is_none(){
-            return Err(())
-        }
+
         //Ok(0)
         unimplemented!();
     }
@@ -413,10 +414,48 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantStateMachine 
     }
 
     fn update_system_state(&mut self, state: Self::SystemState) {
-        self.sys.update_state(state)
+       // self.sys.update_state(state)
+        unimplemented!()
     }
 
     fn system_state(&self) -> Self::SystemState {
-        self.sys.report_state()
+        //self.sys.report_state()
+        unimplemented!()
+
     }
+}
+
+
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Herald for RadiantNode<K, C,R> {
+
+    type ShardKeyType = K;
+    type MapKeyType = usize;
+
+    //TODO need error handling-- return err if the key is already in the map
+    fn add_new_key_mapping(&mut self, map_key: Self::MapKeyType, shard_key: Self::ShardKeyType)->Result<(),()>{
+
+        self.hsvc.shard_key_mapping.entry(map_key).or_insert(shard_key);
+        Ok(())
+    }
+
+}
+
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Bondsmith for RadiantNode<K, C,R> {
+    type ShardKeyMapType = ShardKey;
+    type GroupKeyType = GroupID;
+    type ShardLoadTracker = ShardLoad;
+
+    fn add_new_key_mapping(&mut self, group_key: Self::GroupKeyType, shard_key: Self::ShardKeyMapType)->Result<(),()>{
+        // self.
+        unimplemented!();
+    }
+    fn get_current_shard_load(&self, group_id: Self::GroupKeyType) -> Self::ShardLoadTracker{
+        unimplemented!();
+    }
+    fn adjust_shard_load(&mut self, added: Self::ShardLoadTracker, group_id: Self::GroupKeyType){
+        unimplemented!();
+
+    }
+
+
 }

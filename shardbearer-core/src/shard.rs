@@ -3,10 +3,10 @@ use std::boxed::Box;
 
 pub type ShardKey = usize;
 
-/*pub trait ShardKey: std::hash::Hash + Eq {
+pub trait ShardKeyType: std::hash::Hash + Eq + Default {
 
 }
-*/
+
 
 pub type ShardGroupKey = usize;
 
@@ -19,6 +19,7 @@ pub trait ShardAction {
 /// the `Bondsmith`, to dynamically determine if load rebalancing
 /// is needed
 /// TODO revisit this
+#[derive(Clone)]
 pub struct ShardLoad{
     size_bytes: usize,
     capacity_bytes: usize
