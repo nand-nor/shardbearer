@@ -5,6 +5,7 @@ pub mod radiant;
 pub mod shard;
 pub mod msg;
 pub mod bondsmith;
+pub mod sys;
 
 
 #[derive(Clone)]
@@ -41,4 +42,14 @@ impl Default for HeraldRole {
     fn default() -> Self {
         HeraldRole::VOTER
     }
+}
+
+pub type MemberID = u64;
+pub type GroupID = u64;
+pub type RadiantID = u64;
+
+#[derive(Default)]
+pub struct Timestamp {
+    seconds: u64,
+    nanos: u32,
 }

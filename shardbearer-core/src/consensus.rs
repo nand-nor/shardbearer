@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
-use crate::radiant::{GroupID, MemberID};
+use super::{GroupID, MemberID};
 
-use protobuf::Message as PbMessage;
+
+
 
 pub trait ShardbearerConsensus {
 

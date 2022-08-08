@@ -1,31 +1,31 @@
 use crate::msg::*;
 use crate::shard::*;
-use crate::radiant::{MemberID, Radiant, RadiantNode};
+use crate::radiant::{Radiant, RadiantNode};
 use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};
+use super::MemberID;
 
 //use shardbearer_proto::common::common::HeraldInfo;
 use tracing::{debug, error, info, trace, warn};
 
 use indexmap::IndexMap;
 
-use protobuf::Message;
 use tokio::sync::mpsc::{UnboundedSender, UnboundedReceiver, unbounded_channel};
 use std::boxed::Box;
 
-pub struct HeraldNode<K> {
+pub struct HeraldNode<K, M: ShardbearerMessage /*+ ?Sized*/> {
 
     pub shard_key_mapping: IndexMap<ShardKey, K>,
 
-    pub herald_peers_tx: IndexMap<MemberID, UnboundedSender<Box<HeraldMsg>>>,
-    pub herald_peers_rx: IndexMap<MemberID, UnboundedReceiver<Box<HeraldMsg>>>,
+    pub herald_peers_tx: IndexMap<MemberID, UnboundedSender<M>>,
+    pub herald_peers_rx: IndexMap<MemberID, UnboundedReceiver<M>>,
 
-    bondsmith_rx: UnboundedReceiver<Box<BondsmithMsg>>,
-    bondsmith_tx: UnboundedSender<Box<BondsmithMsg>>,
+    bondsmith_rx: UnboundedReceiver<M>,
+    bondsmith_tx: UnboundedSender<M>,
 
     bondsmith: MemberID,
 }
 
-impl<K> Default for HeraldNode<K> {
+impl<K, M: ShardbearerMessage /*+ ?Sized*/> Default for HeraldNode<K, M> {
     fn default()->Self{
         let (mut b_tx, mut b_rx) = unbounded_channel();
         Self{

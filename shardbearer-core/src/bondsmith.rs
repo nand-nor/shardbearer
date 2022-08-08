@@ -14,7 +14,8 @@ use crate::shard::{ShardKey, ShardKeyType, ShardLoad};
 use crate::herald::Herald;
 use indexmap::IndexMap;
 
-use crate::radiant::{Radiant, GroupID, MemberID};
+use crate::radiant::{Radiant};
+use super::{GroupID, MemberID};
 use crate::msg::*;
 
 use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};
@@ -24,9 +25,16 @@ use tokio::sync::mpsc::{ UnboundedReceiver, UnboundedSender};
 
 use std::boxed::Box;
 
+
+pub enum BondsmithState{
+    INIT,
+    LOCKED,
+    ACTIVE,
+}
+
 pub struct BondsmithNode{//<M: ShardKeyType> {
-    heralds_tx: IndexMap<MemberID, UnboundedSender<Box<BondsmithMsg>>>,
-    heralds_rx: IndexMap<MemberID, UnboundedReceiver<Box<BondsmithMsg>>>,
+    heralds_tx: IndexMap<MemberID, UnboundedSender<Box<dyn ShardbearerMessage>>>,
+    heralds_rx: IndexMap<MemberID, UnboundedReceiver<Box<dyn ShardbearerMessage>>>,
 
     pub shard_key_group_mapping: IndexMap<ShardKey/*dyn ShardKeyType*/, GroupID>,
     group_load: IndexMap<GroupID, ShardLoad>,

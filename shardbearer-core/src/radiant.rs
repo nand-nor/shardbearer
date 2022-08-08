@@ -5,27 +5,26 @@ use crate::bondsmith::{BondsmithNode, Bondsmith};
 
 use crate::shard::ShardLoad;
 
-use crate::consensus::ShardbearerConsensus;
-use crate::consensus::ShardbearerReplication;
+use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};
 use crate::msg::*;
 
 use shardbearer_state::order::OrderState;
 use shardbearer_state::radiant::RadiantState;
-use shardbearer_state::sys::SysState;
-use shardbearer_proto::common::common::{Radiant as RadiantId, Timestamp};
+use crate::sys::SysState;
+
+//use shardbearer_proto::common::common::{Radiant as RadiantId, Timestamp};
 
 use tokio::sync::mpsc::{UnboundedSender,UnboundedReceiver};
-use protobuf::Message;
+
 use indexmap::IndexMap;
 use tracing::{debug, error, info, trace, warn};
 
 use shardbearer_state::radiant::RadiantStateMachine;
 
 
+use super::{Timestamp, GroupID, RadiantID, MemberID};
 
 
-pub type MemberID = u64;
-pub type GroupID = u64;
 
 #[derive(Clone, Hash, Debug, Eq, PartialEq)]
 pub struct RadiantKey {
@@ -151,7 +150,7 @@ pub trait RadiantGroupMgmt {
 }
 
 
-pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
+pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> {
     mid: MemberID,
     gid: GroupID,
     role: super::RadiantRole,
@@ -161,8 +160,8 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
 
     //Channels connecting one or more threads to ports opened up for comms
     //to & from shard members. Open a port for each new/existing member
-    shard_members_tx: IndexMap<MemberID, UnboundedSender<Box<RadiantMsg>>>,
-    shard_members_rx: IndexMap<MemberID, UnboundedReceiver<Box<RadiantMsg>>>,
+    shard_members_tx: IndexMap<MemberID, UnboundedSender<Box<M>>>,
+    shard_members_rx: IndexMap<MemberID, UnboundedReceiver<Box<M>>>,
 /*
     //Channels connecting one or more threads to ports opened up for comms
     //to & from herald. Open a port for each new/existing member
@@ -177,13 +176,13 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
 
 
     order_herald: MemberID,
-    pub order_members: Vec<RadiantId>,
+    pub order_members: Vec<RadiantID>,
 
     /// what radiant group has what shards
     shards: IndexMap<ShardGroupKey, GroupID>,
 
     /// Will instantiate if this particular service instance is elected herald
-    hsvc: HeraldNode<K>,
+    hsvc: HeraldNode<K, M>,
     /// Will instantiate if this particular service instance is elected herald bondsmith
     ctrlsvc: Option<BondsmithNode>,
 
@@ -196,7 +195,7 @@ impl ShardWatermark for Timestamp {
 
 }
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantNode<K, C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantNode<K, C,R, M> {
     pub fn default() -> Self {
         Self {
             mid: 0,
@@ -223,7 +222,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantNode<K, C,R> 
             order_herald: 0,
             order_members: Vec::new(),
             shards: IndexMap::new(),
-            hsvc: HeraldNode::<K>::default(),
+            hsvc: HeraldNode::<K, M>::default(),
             ctrlsvc: None::<BondsmithNode>,
             consensus: None,
             replication: None,
@@ -239,7 +238,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantNode<K, C,R> 
 
 
 
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> Radiant for RadiantNode<K, C,R>{
+impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Radiant for RadiantNode<K, C,R, M>{
     type Role = super::RadiantRole;
 
     fn set_role(&mut self, role: Self::Role) {
@@ -277,7 +276,7 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> Radiant for Radiant
 }
 
 
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantShardMgmt for RadiantNode<K, C,R> {
+impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantShardMgmt for RadiantNode<K, C,R, M> {
     type Watermark = Timestamp;
 
     fn update_shard_list<A: ShardAction>(&mut self, action: A){
@@ -300,18 +299,18 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantShardMgmt fo
 }
 
 
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantGroupMgmt for RadiantNode<K, C,R>{
+impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantGroupMgmt for RadiantNode<K, C,R, M>{
 
     type GroupId = GroupID;
     type MemberId = MemberID;
 
-    type ShardMemberDataTx = UnboundedSender<Box<RadiantMsg>>;
-    type ShardMemberDataRx = UnboundedReceiver<Box<RadiantMsg>>;
-    type MemberListType = RadiantId;
+    type ShardMemberDataTx = UnboundedSender<Box<M>>;
+    type ShardMemberDataRx = UnboundedReceiver<Box<M>>;
+    type MemberListType = RadiantID;
 
-    type HeraldMemberDataTx = UnboundedSender<Box<HeraldMsg>>;
-    type HeraldMemberDataRx = UnboundedReceiver<Box<HeraldMsg>>;
-    type HeraldMemberListType = RadiantId;
+    type HeraldMemberDataTx = UnboundedSender<M>;
+    type HeraldMemberDataRx = UnboundedReceiver<M>;
+    type HeraldMemberListType = RadiantID;
 
     fn add_shard_group_member(
         &mut self,
@@ -387,7 +386,7 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantGroupMgmt fo
 }
 
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantStateMachine for RadiantNode<K, C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantStateMachine for RadiantNode<K, C,R, M> {
     type RadiantState = RadiantState;
     type SystemState = SysState;
     type ClusterState = OrderState;
@@ -426,7 +425,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantStateMachine 
 }
 
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Herald for RadiantNode<K, C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Herald for RadiantNode<K, C,R, M> {
 
     type ShardKeyType = K;
     type MapKeyType = usize;
@@ -440,7 +439,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Herald for RadiantNo
 
 }
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Bondsmith for RadiantNode<K, C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Bondsmith for RadiantNode<K, C,R, M> {
     type ShardKeyMapType = ShardKey;
     type GroupKeyType = GroupID;
     type ShardLoadTracker = ShardLoad;
@@ -458,4 +457,48 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> Bondsmith for Radian
     }
 
 
+}
+
+//use std::error::Error;
+use thiserror::Error;
+
+#[derive(Clone, Debug)]
+pub enum RadiantState {
+    RESET,
+    UNASSOCIATED,
+    ASSOCIATED,
+    LOCKED,     //replicating, voting, or performing some op that requires atomicity
+    ERROR(RadiantStateError),
+}
+
+//TODO add more of these later
+#[derive(Clone, Debug, Error)]
+pub enum RadiantStateError {
+    #[error("radiant state error")]
+    ERROR,
+}
+
+impl Default for RadiantState {
+    fn default() -> Self {
+        RadiantState::UNASSOCIATED
+    }
+}
+
+
+pub trait RadiantStateMachine {
+    type RadiantState;
+    type SystemState;
+    type ClusterState;
+    type OrderState;
+
+    fn order_state(&self) -> Self::OrderState;
+    fn update_order_state(&mut self, state: Self::OrderState);
+    fn update_cluster_state(&mut self, state: Self::ClusterState);
+    fn cluster_state(&self) -> Self::ClusterState;
+
+    fn update_radiant_state(&mut self, state: Self::RadiantState);
+    fn radiant_state(&self) -> Self::RadiantState;
+
+    fn update_system_state(&mut self, state: Self::SystemState);
+    fn system_state(&self) -> Self::SystemState;
 }
