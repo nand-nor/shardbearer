@@ -42,5 +42,5 @@ pub enum StateMessage {
     RADIANTROLE(super::RadiantRole),
     ORDERHERALDSTATE(super::HeraldRole),
     BONDSMITHSTATE(BondsmithState),
-    //CLUSTERSTATE(RadiantOrderState), //TODO have dedicated cluster state
+    CLUSTERSTATE(OrderState), //TODO have dedicated cluster state
 }
