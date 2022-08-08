@@ -6,15 +6,10 @@ use futures::channel::oneshot;
 use futures::executor::block_on;
 use futures::prelude::*;
 use grpcio::{
-    // ChannelBuilder,
     Environment,
-    // ResourceQuota,
     RpcContext,
-    //Server,
     ServerBuilder,
-    // ServerStreamingSink,
     UnarySink,
-    //  WriteFlags,
 };
 use protobuf;
 use tracing::{debug, error, info, trace, warn};
@@ -27,37 +22,42 @@ use shardbearer_proto::common::common::{
 //use shardbearer_proto::radiant::radiant::*;
 
 use crate::config::ShardbearerConfig;
-use crate::radiant::RadiantNode;
+//use crate::radiant::RadiantNode;
 use crate::rctrl::{RadiantController, StateMessage};
 use crate::rhndlr::RadiantRpcClientHandler;
 use shardbearer_core::order::RadiantOrderState;
-use shardbearer_core::radiant::{Radiant, RadiantStateMachine};
+use shardbearer_core::radiant::{Radiant, RadiantNode};// RadiantStateMachine};
 use shardbearer_core::shard::{ShardHashMap, /*Shard, ShardEntry, ShardKey,*/ ShardMap};
-use shardbearer_core::system::RadiantSystem;
+//use shardbearer_core::system::RadiantSystem;
 
-use shardbearer_proto::controller::controller_grpc::HeraldControllerRpc;
+use shardbearer_proto::controller::controller_grpc::BondsmithRpc;
 use shardbearer_proto::herald::herald_grpc::HeraldRpc;
 use shardbearer_proto::radiant::radiant_grpc::{create_radiant_rpc, RadiantRpc};
 use std::convert::TryInto;
 //use crate::server::RadiantServer;
 
+
+use tokio::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+
+use shardbearer_core::consensus::ShardbearerConsensus;
+use shardbearer_core::consensus::ShardbearerReplication;
+
 #[derive(Clone)]
-pub struct RadiantService<K, V> {
-    pub radiant: Arc<Mutex<RadiantNode>>,
+pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> {
+    pub radiant: Arc<Mutex<RadiantNode<C,R>>>,
     pub neighbor: RadiantID,
     setup: bool,
-    pub ctrl_chan_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
+    pub ctrl_chan_tx: UnboundedSender<StateMessage>,
     pub herald: HeraldInfo,
     pub shard_map: Arc<Mutex<dyn ShardMap<K, V>>>,
 }
 
-
-impl<K, V> RadiantService<K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantService<C,R,K, V> {
     pub fn new(
-        radiant: Arc<Mutex<RadiantNode>>,
+        radiant: Arc<Mutex<RadiantNode<C,R>>>,
         shard_store: Arc<Mutex<dyn ShardMap<K, V>>>,
         cfg: ShardbearerConfig,
-        bootstrap: tokio::sync::mpsc::UnboundedSender<StateMessage>,
+        bootstrap: UnboundedSender<StateMessage>,
     ) -> Self {
         let mut neigh = RadiantID::default();
 
@@ -87,7 +87,7 @@ impl<K, V> RadiantService<K, V> {
     }
 }
 
-impl<K, V> RadiantRpc for RadiantService<K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for RadiantService<C,R,K, V> {
     fn beacon_handshake(
         &mut self,
         ctx: RpcContext<'_>,
@@ -113,7 +113,10 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
         resp.set_neighbor(neighbor);
         resp.set_hid(herald);
 
-        tracing::trace!("RadiantService: Setting these vals for BeaconResponse: {:?}", resp);
+        tracing::trace!(
+            "RadiantService: Setting these vals for BeaconResponse: {:?}",
+            resp
+        );
 
         //this is not at all graceful :(
         //Check if this is a bootstrap beacon. If it is, we need to make sure the
@@ -129,7 +132,7 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
                         tracing::trace!("RadiantService: Ending bootstrap");
                         match self.radiant.lock() {
                             Ok(mut g) => {
-                                //TODO make this another send on the control channel, the controller
+                                //TODO make this another send on the control channel, the bondsmith
                                 //should be the only thing updating state?
                                 g.update_cluster_state(RadiantOrderState::VOTING);
                             }
@@ -199,7 +202,6 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
         gid: OrderId,
         sink: UnarySink<Order>,
     ) {
-
         tracing::trace!("RadiantService: received request to send current order members");
         let mut resp = Order::new();
         let gid = gid.get_gid();
@@ -234,7 +236,7 @@ impl<K, V> RadiantRpc for RadiantService<K, V> {
     }
 }
 
-impl<K, V> HeraldRpc for RadiantService<K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> HeraldRpc for RadiantService<C,R,K, V> {
     fn herald_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantID, sink: UnarySink<Roles>) {
         let resp = Roles::new();
 
@@ -246,7 +248,7 @@ impl<K, V> HeraldRpc for RadiantService<K, V> {
     }
 }
 
-impl<K, V> HeraldControllerRpc for RadiantService<K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> BondsmithRpc for RadiantService<C,R,K, V> {
     fn join(&mut self, ctx: RpcContext, req: JoinGroup, sink: UnarySink<ConfigSummary>) {
         let resp = ConfigSummary::new();
 
