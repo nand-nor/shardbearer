@@ -15,7 +15,7 @@ fn main() {
 
     protoc_grpcio::compile_grpc_protos(&["common.proto"], &[proto_root], &common_output, None)
         .expect("Failure to compile common proto");
-    
+
     protoc_grpcio::compile_grpc_protos(
         &["herald/herald.proto"],
         &[proto_root],
