@@ -1,3 +1,6 @@
+//use std::error::Error;
+use thiserror::Error;
+
 #[derive(Clone, Debug)]
 pub enum RadiantState {
     RESET,

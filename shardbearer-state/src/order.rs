@@ -8,6 +8,7 @@ pub enum OrderState {
 }
 /// Used to return information if a requesting node in the system gets a message back
 /// stating the receiver is locked
+#[derive(Clone)]
 pub enum OrderStateOp {
     MEMBERSHIP_UPDATE, //adding a new node to the order
     MEMBERSHIP_SET,    //establishing entirely new membership group (during bootstrap or subsequent resets)
@@ -38,6 +39,7 @@ pub enum OrderStateOp {
 ///
 /// # recoverability
 ///
+#[derive(Clone)]
 pub enum OrderStateError{
     RECOVERABLE_STATE,
     RECOVERABLE_MEMBERSHIP,
@@ -47,7 +49,7 @@ pub enum OrderStateError{
     UNRECOVERABLE,
 }
 
-
+/*
 impl TryFrom<i32> for OrderState {
     type Error = ();
 
@@ -77,7 +79,7 @@ impl TryFrom<i32> for OrderState {
 
         }
     }
-}
+}*/
 
 impl Default for OrderState {
     fn default() -> Self {
