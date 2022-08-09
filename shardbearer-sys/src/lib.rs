@@ -11,6 +11,7 @@ pub mod rctrl;
 pub mod rpc_cli_handler;
 //radiant service impls for all RPC service defines in shardbearer-proto
 pub mod rsvc;
+pub mod msg;
 //top level server function calls to create & run all needed objects
 //within a tokio runtime
 //pub mod server;

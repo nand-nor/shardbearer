@@ -5,7 +5,7 @@ use shardbearer_proto::common::common::{Beacon, BeaconResponse};
 use shardbearer_proto::radiant::radiant_grpc::RadiantRpcClient;
 
 use shardbearer_core::radiant::RadiantNode;
-use shardbearer_core::msg::*;
+use crate::msg::*;
 
 use std::sync::{Arc, Mutex};
 use tracing;

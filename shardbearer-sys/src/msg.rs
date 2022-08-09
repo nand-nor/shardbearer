@@ -3,6 +3,7 @@ use shardbearer_core::radiant::RadiantState;
 use shardbearer_core::bondsmith::BondsmithState;
 use shardbearer_core::order::OrderState;
 use shardbearer_core::sys::SysState;
+use shardbearer_core::*;
 use std::boxed::Box;
 use shardbearer_proto::common::common::{
     Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
@@ -41,8 +42,8 @@ pub enum StateMessage {
     SYSSTATE(SysState),
     ORDERSTATE(OrderState),
     RADIANTSTATE(RadiantState),
-    RADIANTROLE(super::RadiantRole),
-    ORDERHERALDSTATE(super::HeraldRole),
+    RADIANTROLE(RadiantRole),
+    ORDERHERALDSTATE(HeraldRole),
     BONDSMITHSTATE(BondsmithState),
     CLUSTERSTATE(OrderState), //TODO have dedicated cluster state
 }

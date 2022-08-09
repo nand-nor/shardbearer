@@ -8,7 +8,7 @@ use shardbearer_core::sys::{RadiantSystem, SysState};
 
 use shardbearer_core::radiant::{RadiantNode};
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
-use shardbearer_core::msg::*;
+use crate::msg::*;
 use shardbearer_core::{RadiantRole,HeraldRole};
 use shardbearer_proto::common::common::{BeaconResponse, Radiant as RadiantId};
 use crate::rpc_cli_handler;

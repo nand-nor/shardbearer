@@ -17,10 +17,12 @@ use tracing::{debug, error, info, trace, warn};
 
 use shardbearer_proto::common::common::{
     Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
-    Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
+    Order, OrderId, Radiant as RadiantIdMsg, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
 //use shardbearer_proto::radiant::radiant::*;
 use shardbearer_core::radiant::RadiantStateMachine;
+
+use crate::msg::*;
 
 use crate::config::ShardbearerConfig;
 //use crate::radiant::RadiantNode;
@@ -46,7 +48,7 @@ use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 #[derive(Clone)]
 pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMessage> {
     pub radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
-    pub neighbor: RadiantID,
+    pub neighbor: RadiantIdMsg,
     setup: bool,
     pub ctrl_chan_tx: UnboundedSender<StateMessage>,
     pub herald: HeraldInfo,
@@ -60,7 +62,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         cfg: ShardbearerConfig,
         bootstrap: UnboundedSender<StateMessage>,
     ) -> Self {
-        let mut neigh = RadiantID::default();
+        let mut neigh = RadiantIdMsg::default();
 
         neigh.set_ip(cfg.neighbor_ip());
         neigh.set_port(cfg.neighbor_port() as _);
@@ -80,7 +82,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         Arc::clone(&self.shard_map)
     }
 
-    pub fn set_neighbor(&mut self, neighbor: RadiantID) {
+    pub fn set_neighbor(&mut self, neighbor: RadiantIdMsg) {
         self.neighbor = neighbor;
     }
     pub fn set_herald(&mut self, herald: HeraldInfo) {
@@ -98,7 +100,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         tracing::trace!("RadiantService: Received beacon handshake RPC");
 
         let mut resp = BeaconResponse::default();
-        let mut neighbor = RadiantID::new();
+        let mut neighbor = RadiantIdMsg::new();
         let mut herald = self.herald.clone(); //HeraldInfo::new();
         let (gid, mid, state) = match self.radiant.lock() {
             Ok(g) => (g.group_id(), g.member_id(), g.order_state()),
@@ -157,7 +159,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         ctx.spawn(f)
     }
 
-    fn join_system(&mut self, ctx: RpcContext<'_>, id: RadiantID, sink: UnarySink<ConfigSummary>) {
+    fn join_system(&mut self, ctx: RpcContext<'_>, id: RadiantIdMsg, sink: UnarySink<ConfigSummary>) {
         let resp = ConfigSummary::default();
 
         let f = sink
@@ -167,7 +169,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         ctx.spawn(f)
     }
 
-    fn leave_system(&mut self, ctx: RpcContext<'_>, id: RadiantID, sink: UnarySink<ConfigSummary>) {
+    fn leave_system(&mut self, ctx: RpcContext<'_>, id: RadiantIdMsg, sink: UnarySink<ConfigSummary>) {
         let resp = ConfigSummary::default();
 
         let f = sink
@@ -177,7 +179,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         ctx.spawn(f)
     }
 
-    fn radiant_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantID, sink: UnarySink<Role>) {
+    fn radiant_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantIdMsg, sink: UnarySink<Role>) {
         let resp = Role::new();
 
         let f = sink
@@ -208,8 +210,8 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
         let gid = gid.get_gid();
         match self.radiant.lock() {
             Ok(mut g) => {
-                let radiants: Vec<RadiantID> = g.order_members.iter().map(|x| x.clone()).collect();
-                resp.set_members(protobuf::RepeatedField::from_vec(radiants));
+             //   let radiants: Vec<RadiantIdMsg> = g.order_members.iter().map(|x| x.clone()).collect();
+             //   resp.set_members(protobuf::RepeatedField::from_vec(radiants));
             }
             Err(_) => {}
         };
@@ -238,7 +240,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMes
 }
 /*
 impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> HeraldRpc for RadiantService<C,R,K, V> {
-    fn herald_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantID, sink: UnarySink<Roles>) {
+    fn herald_vote(&mut self, ctx: RpcContext<'_>, radiant: RadiantIdMsg, sink: UnarySink<Roles>) {
         let resp = Roles::new();
 
         let f = sink

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use shardbearer_core::radiant::MemberID;
+use shardbearer_core::MemberID;
 use shardbearer_core::consensus::{ConsensusCfg, ReplicationCfg};
 use std::error::Error;
 use std::fs::File;
