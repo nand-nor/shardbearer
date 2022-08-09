@@ -12,28 +12,29 @@ use tracing;
 use grpcio::{ChannelBuilder, Environment};
 
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
+use shardbearer_core::shard::ShardbearerMessage;
 
-use crate::rctrl::*;//StateMessage;
+use crate::rctrl::*;
 
 
 
 
 //#[tracing::instrument]
-pub struct RadiantRpcClientHandler<K, C: ShardbearerConsensus, R: ShardbearerReplication> {
+pub struct RadiantRpcClientHandler<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> {
     cmd_rx: tokio::sync::mpsc::UnboundedReceiver<ClientCommand>,
     state_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
-    pub radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
+    pub radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
 
     herald_cli: Option<HeraldRpcClient>,
     radiant_cli: Option<RadiantRpcClient>,
     bondsmith_cli: Option<BondsmithRpcClient>,
 }
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantRpcClientHandler<K,C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> RadiantRpcClientHandler<K,C,R, M> {
     pub fn new(
         cmd_rx: tokio::sync::mpsc::UnboundedReceiver<ClientCommand>,
         state_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
-        radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
+        radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
     ) -> Self {
 
         tracing::trace!("Constructor for RadiantRpcClientHandler called");

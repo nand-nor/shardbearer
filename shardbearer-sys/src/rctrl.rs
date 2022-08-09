@@ -1,10 +1,10 @@
 use crate::config::ShardbearerConfig;
 use crate::rpc_cli_handler::{RadiantRpcClientHandler};
 
-use shardbearer_state::bondsmith::BondsmithState;
-use shardbearer_state::order::OrderState;
-use shardbearer_state::radiant::{RadiantState, RadiantStateMachine};
-use shardbearer_state::sys::{RadiantSystem, SysState};
+use shardbearer_core::bondsmith::BondsmithState;
+use shardbearer_core::order::OrderState;
+use shardbearer_core::radiant::{RadiantState, RadiantStateMachine};
+use shardbearer_core::sys::{RadiantSystem, SysState};
 
 use shardbearer_core::radiant::{RadiantNode};
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
@@ -21,23 +21,24 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use tokio::sync::mpsc::{Receiver, UnboundedReceiver, UnboundedSender};
 use tokio::sync::oneshot::channel;
+use shardbearer_core::shard::ShardbearerMessage;
 
-pub struct RadiantCtrl<'a, K, C: ShardbearerConsensus, R: ShardbearerReplication,> {
+pub struct RadiantCtrl<'a, K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> {
     ctrl_chan_rx: UnboundedReceiver<StateMessage>,
     ctrl_chan_tx: UnboundedSender<StateMessage>,
     cli_cmd_tx: UnboundedSender<ClientCommand>,
     _lifetime: std::marker::PhantomData<&'a ()>,
-    pub radiant: Arc<Mutex<RadiantNode<K, C,R>>>,
+    pub radiant: Arc<Mutex<RadiantNode<K, C,R, M>>>,
 }
 
 
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,K, C,R> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> RadiantCtrl<'static,K, C,R, M> {
     pub fn new(
         ctrl_chan_rx: UnboundedReceiver<StateMessage>,
         ctrl_chan_tx: UnboundedSender<StateMessage>,
         cli_cmd_tx: UnboundedSender<ClientCommand>,
-        radiant: Arc<Mutex<RadiantNode<K, C, R>>>,
+        radiant: Arc<Mutex<RadiantNode<K, C, R, M>>>,
     ) -> Self {
         Self {
             ctrl_chan_rx,
@@ -53,7 +54,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
         mut trigger_rx: Receiver<()>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let (tx_drop, mut rx) = channel();
-        RadiantCtrl::<K,C,R>::initial_association(guard, rx).await?;
+        RadiantCtrl::<K,C,R, M>::initial_association(guard, rx).await?;
 
         tokio::spawn(async move {
             match trigger_rx.recv().await {
@@ -132,7 +133,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication> RadiantCtrl<'static,
             });
 
         tokio::spawn(async move {
-            if let Err(_) = RadiantCtrl::<K,C,R>::bootstrap(guard, trigger_rx).await {
+            if let Err(_) = RadiantCtrl::<K,C,R, M>::bootstrap(guard, trigger_rx).await {
                 tracing::error!("Error running bootstrap setup steps");
             }
         });

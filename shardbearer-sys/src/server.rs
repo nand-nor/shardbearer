@@ -28,12 +28,12 @@ use crate::rpc_cli_handler::RadiantRpcClientHandler;
 
 use shardbearer_core::consensus::ShardbearerConsensus;
 use shardbearer_core::consensus::ShardbearerReplication;
-use shardbearer_state::order::OrderState;
+use shardbearer_core::order::OrderState;
 use shardbearer_core::radiant::{Radiant, RadiantNode};
 use shardbearer_core::shard::{ShardHashMap, ShardMap};
-use shardbearer_state::sys::SysState;//RadiantSystem;
+use shardbearer_core::sys::SysState;//RadiantSystem;
 
-use shardbearer_state::radiant::{RadiantStateMachine, RadiantState};
+use shardbearer_core::radiant::{RadiantStateMachine, RadiantState};
 
 
 
@@ -44,12 +44,12 @@ use std::convert::TryInto;
 
 use tokio::sync::mpsc::unbounded_channel;
 
-
+use shardbearer_core::shard::ShardbearerMessage;
 
 /// Users can call this as the entry point or optionally
 /// define a custom entry point that calls radiant_server()
 /// see the custom-entrypoint example
-pub fn server_main<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone>(
+pub fn server_main<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone, M: ShardbearerMessage>(
 ) -> Result<(), Box<dyn std::error::Error>> {
 
     //TODO make this a verbose mode feature config
@@ -90,7 +90,7 @@ pub fn server_main<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'stati
             }
         };
         rt.block_on(async move {
-            if let Err(e) = radiant_server::<C, R, K, V>(cfg).await {
+            if let Err(e) = radiant_server::<C, R, K, V, M>(cfg).await {
                 tracing::error!("RadiantServer: error running server {:?}", e.to_string());
             }
         });
@@ -102,7 +102,7 @@ pub fn server_main<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'stati
 }
 
 #[tracing::instrument]
-pub async fn radiant_server<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone>(
+pub async fn radiant_server<C: ShardbearerConsensus, R: ShardbearerReplication, K: 'static + std::hash::Hash + Eq + Clone, V: 'static + Clone, M: ShardbearerMessage>(
     cfg: ShardbearerConfig,
 ) -> Result<(), Box<dyn std::error::Error>> {
 
@@ -115,11 +115,11 @@ pub async fn radiant_server<C: ShardbearerConsensus, R: ShardbearerReplication, 
     let rpc_cli_tx = ctrl_chan_tx.clone();
 
     let shard_map: ShardHashMap<K, V> = ShardHashMap::new();
-    let mut radiant_node: RadiantNode<K, C,R> = RadiantNode::default();
+    let mut radiant_node: RadiantNode<K, C,R,M> = RadiantNode::default();
     radiant_node.set_cfg(&cfg);
     let arc_node = Arc::new(Mutex::new(radiant_node));
 
-    let instance: RadiantService<C,R,K, V> = RadiantService::new(
+    let instance: RadiantService<C,R,K, V,M> = RadiantService::new(
         Arc::clone(&arc_node),
         Arc::new(Mutex::new(shard_map)),
         cfg.clone(),
@@ -131,7 +131,7 @@ pub async fn radiant_server<C: ShardbearerConsensus, R: ShardbearerReplication, 
     let rhndlr: &'static mut RadiantRpcClientHandler = Box::leak(Box::new(
         RadiantRpcClientHandler::new(cmd_chan_rx, rpc_cli_tx, Arc::clone(&arc_node)),
     ));
-    let rctrl: &'static mut RadiantCtrl<K, C, R> = Box::leak(Box::new(RadiantCtrl::new(
+    let rctrl: &'static mut RadiantCtrl<K, C, R,M> = Box::leak(Box::new(RadiantCtrl::new(
         ctrl_chan_rx,
         ctrl_chan_tx,
         cmd_chan_tx,

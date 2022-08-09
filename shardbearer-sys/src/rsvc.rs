@@ -20,17 +20,18 @@ use shardbearer_proto::common::common::{
     Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
 //use shardbearer_proto::radiant::radiant::*;
-use shardbearer_state::radiant::RadiantStateMachine;
+use shardbearer_core::radiant::RadiantStateMachine;
 
 use crate::config::ShardbearerConfig;
 //use crate::radiant::RadiantNode;
 use crate::rctrl::{RadiantCtrl};
 use crate::rpc_cli_handler::RadiantRpcClientHandler;
-use shardbearer_state::order::OrderState;
+use shardbearer_core::order::OrderState;
+
+use shardbearer_core::*;
 
 use shardbearer_core::radiant::{Radiant, RadiantNode};// RadiantStateMachine};
-use shardbearer_core::shard::{ShardHashMap, /*Shard, ShardEntry, ShardKey,*/ ShardMap};
-use shardbearer_core::msg::*;
+use shardbearer_core::shard::{ShardHashMap, /*Shard, ShardEntry, ShardKey,*/ ShardMap, ShardbearerMessage};
 
 use shardbearer_proto::bondsmith::bondsmith_grpc::BondsmithRpc;
 use shardbearer_proto::herald::herald_grpc::HeraldRpc;
@@ -40,12 +41,11 @@ use std::convert::TryInto;
 
 
 use tokio::sync::mpsc::{UnboundedSender, UnboundedReceiver};
-
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 
 #[derive(Clone)]
-pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> {
-    pub radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
+pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMessage> {
+    pub radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
     pub neighbor: RadiantID,
     setup: bool,
     pub ctrl_chan_tx: UnboundedSender<StateMessage>,
@@ -53,9 +53,9 @@ pub struct RadiantService<C: ShardbearerConsensus, R: ShardbearerReplication, K,
     pub shard_map: Arc<Mutex<dyn ShardMap<K, V>>>,
 }
 
-impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantService<C,R,K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMessage> RadiantService<C,R,K,V, M> {
     pub fn new(
-        radiant: Arc<Mutex<RadiantNode<K,C,R>>>,
+        radiant: Arc<Mutex<RadiantNode<K,C,R, M>>>,
         shard_store: Arc<Mutex<dyn ShardMap<K, V>>>,
         cfg: ShardbearerConfig,
         bootstrap: UnboundedSender<StateMessage>,
@@ -88,7 +88,7 @@ impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantService<C,
     }
 }
 
-impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V> RadiantRpc for RadiantService<C,R,K, V> {
+impl<C: ShardbearerConsensus, R: ShardbearerReplication, K, V, M: ShardbearerMessage> RadiantRpc for RadiantService<C,R,K, V, M> {
     fn beacon_handshake(
         &mut self,
         ctx: RpcContext<'_>,
