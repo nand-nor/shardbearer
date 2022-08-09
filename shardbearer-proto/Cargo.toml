@@ -10,12 +10,12 @@ path="src/lib.rs"
 
 [dependencies]
 futures = "0.3"
-grpcio = { version = "0.9.0"}
-protobuf = { version = "3.1.0"}
+grpcio = { version = "0.10.3",  default-features = false, features = ["protobuf-codec"]}
+protobuf = { version = "3.0"}
+#grpc = "0.6.2"
 
 [build-dependencies]
 protoc-grpcio="3.0.0"
 grpcio-compiler="0.7"
-protobuf-codegen = "3.1.0" #{ version="2.25.2", path = "https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-codegen" }
-#protoc-rust = { path = "../protoc-rust" }
-
+protobuf-codegen = "3.0.0" #{ version="2.25.2", path = "https://github.com/stepancheg/rust-protobuf/tree/master/protobuf-codegen" }
+#protoc-rust-grpc = "0.6.2"

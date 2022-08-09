@@ -1,16 +1,18 @@
-#[toolchain]
-#channel="nightly"
+[toolchain]
+channel="nightly"
 
 
 
 #[target.x86_64-pc-windows-gnu]
-#[target.x86_64-pc-windows-gnu.zlib-sys]
 #linker = "C:\\cygwin64\\bin\\gcc.exe"
 #ar = "C:\\cygwin64\\bin\\llvm-ar.exe"
 #[target.x86_64-pc-windows-gnu.protoc]
-#rustc-link-search = ["C:\\.local\\bin\\""]
-#rustc-link-lib = ["libsoundio.a"]
+
+[target.x86_64-pc-windows-gnu.libclang]
+rustc-link-search = ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\Llvm\\x64\\bin"]
+rustc-link-lib = ["libclang.dll"]
 
 
 #[target.x86_64-unknown-linux-gnu]
 #linker =
+
