@@ -1,149 +1,100 @@
-
-
 # Architecture
 
-## General Runtime Execution Structure 
-
-The system assumes that there is no less than 3 nodes, and will tolerate some amount of waiting for system startup 
-across nodes (i.e. a node will not  immediately exit if no responses are received to broadcast probes).
-
-The services shall run in separate process spaces, 
-
-
 The `shardbearer` system uses a hierarchy of roles, similar to a tiering system, to coordinate activities 
-within the system. 
+within the system. Groups of `radiants` are called `orders`, which are assigned `shards`; for each `shard` group a 
+`herald` must be elected. A `herald` coordinates the activity of `radiants` within the `shard` group, mostly 
+relating to moving shards, or fracturing/consolidating `shards`. The `bondsmith` coordinates the activity of the 
+whole system, communicating with `heralds` to perform things like load balancing and generally maintaining 
+distributed state of the system. System roles, like `radiant`, `heralrd`, are defined as traits, with structs that 
+implement said traits, which are then wrapped into services and combined with `protobuf` `gRPC` implementations to 
+structure external communication among nodes in the system. 
+ 
+As mentioned above, the system is comprised of `radiants`, `heralds`, and a controlling `herald` called the `bondsmith`. 
+There is additionally a `shard` component.
 
-System roles are defined as traits that are then wrapped into services, and combined with `protobuf` `gRPC` 
-implementations to structure external communication among nodes in the system. A single node will run multiple
-services depending on it's role, for now these are part of a single process space, two synchronous thread pools
-that each launch their own tokio runtime to execute asynchronously within their own execution context. (Eventually
-want services run as distinct processes on any given node server, and interact locally via *nix sockets when needed. 
-Services will eventually execute with respect to each other locally in a synchronous manner as distinct thread groups, 
-and each executes it's threadpool asynchronously using the tokio runtime. )
-
-## System Roles
-
-The system is comprised of `radiants`, `heralds`, and a controlling `herald` called
-the `bondsmith`. 
-
-
-
-The main components giving structure to this system are `shards`, `radiants`, `orders`, and `heralds`.
-
-- A `shard` is a subset of the key-value store that a given `shardbearer` system instance is serving. The size
-  (i.e. the total size of key-value pairs in bytes as stored on disk) of any given `shard` is a function of the  
-  available disk space on each `radiant` node (for simplicity I assume this is consistently the same* across all
-  `radiant` nodes) the size of an `order` (also for simplicity I assume this is always the same rounding down if
-  there is an odd number of `radiant` nodes i.e. if there are two `orders` and 7 nodes then the odd-node-out is not
-  factored into calculations* and each `order` is treated as if it is 3 members for load balancing) and the total amount
-  of data in bytes contained across all `shards`.
+- A `shard` is a subset of the key-value store that a given `shardbearer` system instance is serving. 
 
 - A `radiant` essentially represents an individual server instance responsible for serving the data
   contained in a `shard`. The data can be an entire `shard` or multiple `shards`, depending
-  on current load, group membership (detailed further below), and system resources. Each `radiant` is part of an `order`,
-  which is effectively a replica group.
+  on current load, group membership (detailed further below), and system resources. 
 
 - An `order` is a group of `radiants` responsible for serving requests to create/remove/update values in one or
   more`shards`. An `order` is the term applied to a replica group, composed of two or more `radiants`, responsible for
-  one or more `shards`. An `order` instance uses the `raft` consensus algorithm to replicate the group's `shards`
-  across all `radiants` in the `order`. Similarly, a leader or `herald` must be elected to lead each `order`.
+  one or more `shards`. Each order has a leader or `herald`, that must be elected at the time of `order` formation.
 
 - A `herald` is elected within an `order` to act as the leader of the replica group. A `herald` is a covariant of
-  a `radiant`, meaning all `heralds` are `radiants` but not all `radiants` are `heralds`. A `herald` can have one of two
-  roles: it will either be a leader of it's `order`, or, if elected, it will take on the role of the controlling
-  coordinator `herald` and a new `herald` of it's `order` must be elected. Therefore, a `shardbearer` system can have
-  multiple `heralds` but only one `herald` instance will act as the controlling coordinator (the `shard` controlling
-  `herald`).  Non-controlling `heralds`act as top-level control for one or more `orders`. They coordinate with the
-  controlling `herald` to maintain distributed state for the system. The controlling `herald` in a `shardbearer` system
-  is the point from which `shards` are distributed across all servers participating. It is responsible for
-  determining which `orders` serve which `shards` and effectively performs dynamic
-  load balancing as `radiants` leave and join the system. The `heralds` in a `shardbearer` system also use the
-  `raft` consensus algorithm to replicate the state data that determines what information is stored where.
-  This enables the system additional fault-tolerance: if one `herald` goes down, another `herald` can step in
-  and perform the coordination needed by the system
+  a `radiant`, meaning all `heralds` are `radiants` but not all `radiants` are `heralds`. All `radiant` objects
+  have the ability to become a `herald` at any time, for example if a group's `herald` experienced some unrecoverable
+  failure.  A `shardbearer` system can have multiple `heralds` depending on number of nodes in the system. A system 
+  must consist of no less than 3 nodes, and `order` sizes shall be determined based on appropriate load balancing
+  w.r.t group membership. (Note to self: Need to decide what logic will determine when a group will need to be 
+  split, if not from a human admin). 
+  
+  All the `heralds` in a system report to/coordinate with a top-level controller called a `bondsmith`
+  
+- A `bondsmith` is a `radiant`, `herald` node with an additional role as the top-level system controller. It's
+main function is to provide system configuration (what nodes (`radiants`) are in what replica groups (`orders`), 
+and what shards each group is responsible for replicating/serving, etc.). It is both the entrypoint for client 
+requests as well as for system administrators who want to manually reconfigure a system. `heralds` coordinate with 
+eachother & the `bondsmith` to maintain distributed state in the system. Dynamic handling of system membership and
+`shard` load balancing
+is also a future goal of the `bondsmith`, to reduce the need for human interaction/input (and increase fault tolerance/
+recoverability). As new servers (`radiants`) enter and leave the system, `shards` must be redistributed to balance 
+the load dynamically. 
 
-*later optimizations will treat this in a more complex way e.g. not fixed/the same across the whole system
-
-The `bondsmith` or the big boss `shard` controller `herald` is responsible for managing configuration: as new 
-servers (`radiants`) enter and leave the system, `shards` must be redistributed to balance the load dynamically. 
-In this way, the `shard` controller `herald` provides the needed information to the `orders` (replica groups) to 
-determine what `shards` to serve. The `shard` controller `herald` also acts as a client gateway: clients 
-consult the `shard` controller to be routed to the `order` responsible for the `shard` they are attempting to 
-read/write. 
-
-
-
-
-In terms of variance, each node in the system implements a trait that represents the `radiant` role. 
-
-Groups of `radiants` are assigned `shards`, and for each `shard` group a `herald` must be elected. A `herald` is in charge of a shard group, and coordinate the
-activity of `radiants` within the `shard` group, mostly relating to moving shards, or fracturing/consolidating
-`shards`. The `bondsmith` coordinates the activity of the whole system, communicating with `heralds` to perform
-things like load balancing (fracturing large `shards` and assigning new `shards` to an established group, for example).
-
-
-
-The top level controller `bondsmith` represents the main entrypoint for receiving client
+    The top level controller `bondsmith` represents the main entrypoint for receiving client
 requests & therefore a node must be assigned this role prior to system bring up. Similar to a 3 tiered system,
-the `bondsmith` behaves somewhat like tier 1. The `heralds` in this system behave similarly to tier 2, and the `radiants` tier 3.
+the `bondsmith` behaves somewhat like tier 1. The `heralds` in this system behave similarly to tier 2, and the 
+`radiants` tier 3. Need to determine if it is feasible to have a dynamically chosen `bondsmith` e.g. what that would
+mean in terms of an additional layer providing the client entry point(s), if/how that role could spontaneously
+arise & then set up *secure* channels with such an additional layer, etc. 
 
+    At system startup, a `bondsmith` will wait some amount of time collecting beacons from other nodes in the system,
+    and will eventually determine a number of `orders` (if such configuration information is not provided via config file)
+    and assign the accounted-for `radiants` to each order. At that point, each `order` coordinates internally to elect
+    a `herald`. The `herald` will then take on direct comms with the `bondsmith`; at no other point will the `bondsmith`
+    have direct communication (RPC) to `radiant` unless that node is in the `herald` role or some system error has
+    arisen (like a system reset is needed, a new `herald` was elected, etc.)
+    
+## System configuration
 
-
-These roles-as-traits establish a system of variance that defines the way any given node will function with respect
-to the rest of the system. For more type system variance details relating to system roles, see [Variance: System Roles and Relationships](#variance-system-roles-and-relationships)
-
+Each binary produced (by default in the basic `radiant` state) must be provided with a set of parameters as a
+    toml file to be parsed at runtime. This must include at least one address of a known "neighbor" `radiant` node in 
+    the system through which the node can associate with the rest of the system. Additionally this should also
+    include the address of the assigned-in-advance `bondsmith`. Communication in the system is represented by a graph 
+    of essentially what nodes have the ability to directly send RPCs to what other nodes, referred to here as the 
+    association graph. To support system goals around recoverability, autonomy, etc., there are
+    association graph invariants that must hold and that determine certain parameters to be passed in system config files. 
 
 #### Variance: System Roles and Relationships
 
-In this system, all nodes are `radiant`, e.g. `radiant` is the supertype trait that all nodes
+The main traits defined here relevant to the function of a node in terms of group role/membership are 
+`radiant`, `herald`, and `bondsmith`. These roles-as-traits establish a system of variance that defines the way 
+any given node will function with respect to the rest of the system. The goal here is to enable any node in the
+ system to take on any role appropriate given a perceived set of conditions. In this system, all nodes are `radiant`, 
+ e.g. `radiant` is the supertype trait that all nodes
 implement, and `radiant` is the role that all nodes in all states execute in.
 
 Depending on the voting results in the system, a `radiant` can become the `herald` of it's `order`. So, included
-in each `radiant` binary is the ability to, at runtime, create a dynamic trait object that enables a `radiant`
-to call the `herald` trait methods. Furthermore, A `herald` at any time has the needed logic to enable it to become
-the `shard` controller `herald` based on the results of a `herald`-only vote.
+in each `radiant` binary is the ability to, at runtime, execute methods from the `herald` trait object. And because 
+`radiant` is the supertype, any `bondsmith` or `herald` can downgrade to become just a replica group member.
 
 The following relationships hold:
 - All nodes are `radiant`, e.g. `radiant` is the supertype trait that all nodes implement
 - All `heralds` are `radiant` but not all `radiants` are `heralds`
-- All `radiants` belong to an `order`
-- A `shard` controller `herald` is a `radiant` that belongs to an `order` but that has switched into a special `herald` mode
-  to serve as the elected coordinator for all `shards` across all `orders`. Such an order will need a new `herald` (so
-  the minimum size of any `order` must be 3.)
-
-#### System Bootstrapping, Elections, and Role Assignment
-
-
-During system bring up there is a bootstrapping period wherein system membership, `shard` group
-formation, and role election is performed.
-
-For this reason, on system bootstrap, the voting order (from the pool of all currently registered `radiants`) and
-establishment of memberships etc., is:
-1. Bootstrap members initiate a vote to elect `shard` controlling `herald`
-2. Controlling `herald` determines the number of `orders` and then assigns each known `radiant` to them. (To Do:
-   determine if we are building a `shardbearer` system from an existing database that we will pull into `orders` versus
-   starting empty, with one `order`, and then growing / rebalancing and the underlying key value store grows?)
-   For simplicity/to start, the underying key-value store will always be empty so no matter how many nodes join at
-   bootstrap, there will only ever be one `order`
-3. `Order` members are distributed `radiant` identifiers (metadata like `<ip>`:`<port>`) from the controlling `herald`
-   to populate their lookup tables with known members. Heartbeat checks are set up to periodically poll members
-   (Eachother? or should only the `herald` do this? TODO consider how this impacts autonomy)
-4. `Order` members initiate a vote to determine the `order`'s `herald`
-5. `heralds` report to the `shard` controlling `herald`
-
-#### Assigning Bootstrap Configuration Parameters
-
-Each binary produced (by default in the basic `radiant` state) must be provided with a set of parameters as a
-toml file to be parsed at runtime.
+- All `bondsmiths` are `radiant` and `heralds`, but the reverse does not hold
+- All `radiants` belong to an `order`. The `order` of the `bondsmith` is made up by the `heralds`, and this `order` is
+special in that is does not serve `shard` requests
 
 ##### Association Graph Invariants
 
-The association graph must hold the following invariants:
+The association graph, where an edge is a network connection between two nodes as provided by a known-in-advance
+ (via config file providing a list of one or more neighbors) network address, must hold the following invariants:
 
 - edges are directed
 - no self-loops
-- each node must have at least one edge incident from (leaving) itself and incident to (entering) another node (not itself)
-  Put more simply, a `radiant` node must have a directed edge pointing to a neighbor.
+- each node must have at least one edge incident from (leaving) itself and incident to (entering) another 
+node (not itself). Put more simply, a `radiant` node must have a directed edge pointing to a neighbor.
 - each node can have `t` incident-from edges (leaving) from other nodes where `t` falls in the range`0<=t<=n-1`  
   and `n` is the number of `radiant` nodes currently in the system. Put more simply, multiple `radiant` nodes can
   have an edge pointing to a single `radiant` node, and a `radiant` node can also have no edges incident to (entering) it,
@@ -155,46 +106,24 @@ The association graph must hold the following invariants:
 - Also following the above, the graph can be cyclic
 
 
-### Problem Spec departures/Capabilities/Limitations/General Thoughts (need to clean up)
+## Association, communication, & data topologies
 
-#### Increase Decentralization
+After system bringup, in the `bondsmith` role, a node will only ever communicate via RPC to an elected `herald`, 
+where the `herald` must "register" itself with the `bondsmith` after a successful election. Therefore edges from the
+`bondsmith` are bi-directional but only incident to `herald` nodes. 
 
-I have attempted to add logic to enable the system to recover from cases where nodes experience system failure in
-an unplanned-for manner. Nodes can explicitly leave the system, for example if there is some fault detected that
-requires the node to either restart the service or restart the entire server. Nodes can also go down without
-any notice to the rest of the cluster; `heralds` have functionality to periodically poll the `radiant` members of
-the `order` for which they are responsible, and `heralds` can also poll each other.
-The logic I have attempted to add is intended to enable any server at any time to take
-on any role in the system depending on these polling operations.
+Within `orders`, only the `order`'s `herald` maintains edges to the `radiants` that make up the `order`. This gives the 
+system's authority/command structure a star-like topology, or a tree, where the `bondsmith` is the center/root, with 
+edges to `heralds`, and each `herald` having multiple edges incident to the `radiants` in it's `order`. Note that this
+is the formation post-bootstrap, as during bootstrap a node will spin up and reach out to any "neighbor" node provided
+in it's config file. After bootstrap, any commands re: configuration changes or data movement, including association
+probing, will follow this structure. 
 
-This means that there is no separate `shard` controller service: a `shard` controller is
-elected from the available `heralds` and any `herald` is compiled with the code needed to execute that role.
-Furthermore, any `radiant` at any time can become a `herald`, so any `radiant` can take on the controller role as long
-as it has first taken on the `herald` role.
+### Data movement
 
-#### Increase System Autonomy
+This will be part of the generic replication design-- the following possibilities can be implemented (need to research/
+read more about this)
 
-To increase the system's ability to execute more autonomously, I have attempted to remove the need for any
-human input. A new node in the system can be added without input from a 3rd party (such as a system administrator)
-as long as it has the address of at least one other node in the system. As part of the runtime configuration file
-provided to a `radiant`, the address of another member of the system must be included. This address will be used
-for system association, and the overall system association graph must meet the requirements/ specified invariants
-listed in the  [Association Graph Invariants](#association-graph-invariants). This address will be used to enter
-the system via a series of RPCs sent throughout the system.
-
-The functionality required to enable outside-system input (via human sysadmin or otherwise) is also retained to enable
-the add/remove actions for `radiant` nodes. This is done for testability and also as a failsafe (no system that is
-fully autonomous should run without some kind of killswitch)
-
-A system of at least two nodes can bootstrap itself (ideally) just from being able to send an RPC to
-at least one other cluster member.
-
-Generally I have ignored any specification that seems to be purely for enabling automated testing/grading of the lab.
-Things that made sense for general system testing/integration have been kept.
-
-#### Limitations
-
-There are lots of limitations as this is just a for-fun project that I am using to teach myself some distributed
-system theory and work on build `async` Rust skills. Lots of things discussed in this README are under development
-even though the wording may sound like the system does these things already.
-TODO comprehensive list of limitations
+1. When `shard` data must move, the requester routes the data: a `bondsmith` requests to a `herald`, a `herald` requests 
+to the `radiants`, the data moves from `radiant` to `herald` to `bondsmith` then back to wherever the data is destined
+(either to a client or to another `order` via `herald`) 

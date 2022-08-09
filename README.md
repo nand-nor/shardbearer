@@ -54,17 +54,18 @@ The `docs` dir provides a lot more details but is largely in need of cleanup.
 The following sub-crates are part of the `shardbearer` crate/build system:
 - `shardbearer-proto` where the protocol buffer definitions are generated
 - `shardbearer-core`  where all of the traits are defined and some simple/example/default trait implementations provided
-- `shardbearer-state` is a crate for various state enums that are used in building state machines for 
 - `shardbearer-sys` is the crate that exposes a user API and further wraps the implementations of `shardbearer-core`,
-`shardbearer-proto`, and `shardbearer-state` in methods that provide easy building blocks to customize and further
+`shardbearer-proto`, in methods that provide easy building blocks to customize and further
  define services
 
-Maybe more to come, TBD! TODO describe whats in each
 
+Maybe more to come, TBD! TODO describe whats in each
+ Also tests and examples need descriptions once they are more fully implemented!
 
 ## Project Status
 
-Very much a WIP!
+Very much a WIP! A good reference point to check this are the open git issues I am using to track my TODOs, but
+those are not nearly comprehensive enough. 
 
 - [x] Initial RPC definitions, service impls (just enough to provide scaffolding)
 - [ ] Generic structure for server setup: requires trait definitions (just enough for initial scaffolding)
@@ -82,19 +83,13 @@ Very much a WIP!
     - system reset
     - shard soft reset (rollback to some last indicated good state on the event of some error arising within shard group)
 - [ ] `shard` management methods: generic trait definition and provide some examples
+- [ ] `serde` traits for shards (for enabling generic `K`,`V` passing in protobuf messages)
 - [ ] `shard` controller `herald` (`bondsmith`) methods:
   - load-rebalancing
   - system reconfig
   - dynamic membership support
 - [ ] heartbeat checks and role-reassignment if needed
 - [ ] Documentation
-
-## Future Work
-
-Eventually, to increase fault tolerance, want to add logic to support additional top level controlling `bondsmiths`
-in response to some perceived measure of system load. 
-
-
 
 
 
