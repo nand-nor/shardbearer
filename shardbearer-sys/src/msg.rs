@@ -1,14 +1,14 @@
 //use protobuf::Message;
-use shardbearer_core::radiant::RadiantState;
 use shardbearer_core::bondsmith::BondsmithState;
 use shardbearer_core::order::OrderState;
+use shardbearer_core::radiant::RadiantState;
 use shardbearer_core::sys::SysState;
 use shardbearer_core::*;
-use std::boxed::Box;
 use shardbearer_proto::common::common::{
-    Beacon, BeaconResponse, ConfigId, ConfigSummary, Bondsmith, HeraldInfo, JoinGroup, LeaveGroup,
+    Beacon, BeaconResponse, Bondsmith, ConfigId, ConfigSummary, HeraldInfo, JoinGroup, LeaveGroup,
     Order, OrderId, Radiant as RadiantID, Role, Roles, ShardMoveRequest, ShardMoveRequestResponse,
 };
+use std::boxed::Box;
 
 use shardbearer_core::shard::ShardbearerMessage;
 
@@ -22,7 +22,6 @@ pub struct HeraldMsg {
     pub msg: Box<dyn ShardbearerMessage>,
 }
 
-
 pub struct RadiantMsg {
     pub rid: RadiantID,
     pub msg: Box<dyn ShardbearerMessage>,
@@ -34,7 +33,7 @@ pub enum ClientCommand {
     CTRL(Box<BondsmithMsg>),
 }
 
-pub struct Vote{}
+pub struct Vote {}
 
 pub enum StateMessage {
     INITSTATE(BeaconResponse),

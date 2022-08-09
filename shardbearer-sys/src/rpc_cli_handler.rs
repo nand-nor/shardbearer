@@ -1,42 +1,44 @@
-
 use shardbearer_proto::bondsmith::bondsmith_grpc::BondsmithRpcClient;
-use shardbearer_proto::herald::herald_grpc::HeraldRpcClient;
 use shardbearer_proto::common::common::{Beacon, BeaconResponse};
+use shardbearer_proto::herald::herald_grpc::HeraldRpcClient;
 use shardbearer_proto::radiant::radiant_grpc::RadiantRpcClient;
 
-use shardbearer_core::radiant::RadiantNode;
 use crate::msg::*;
+use shardbearer_core::radiant::RadiantNode;
 
+use grpcio::{ChannelBuilder, Environment};
 use std::sync::{Arc, Mutex};
 use tracing;
-use grpcio::{ChannelBuilder, Environment};
 
 use shardbearer_core::consensus::{ShardbearerConsensus, ShardbearerReplication};
 use shardbearer_core::shard::ShardbearerMessage;
 
 use crate::rctrl::*;
 
-
-
-
 //#[tracing::instrument]
-pub struct RadiantRpcClientHandler<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> {
+pub struct RadiantRpcClientHandler<
+    K,
+    C: ShardbearerConsensus,
+    R: ShardbearerReplication,
+    M: ShardbearerMessage,
+> {
     cmd_rx: tokio::sync::mpsc::UnboundedReceiver<ClientCommand>,
     state_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
-    pub radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
+    pub radiant: Arc<Mutex<RadiantNode<K, C, R, M>>>,
 
     herald_cli: Option<HeraldRpcClient>,
     radiant_cli: Option<RadiantRpcClient>,
     bondsmith_cli: Option<BondsmithRpcClient>,
 }
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage> RadiantRpcClientHandler<K,C,R, M> {
+impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage>
+    RadiantRpcClientHandler<K, C, R, M>
+{
     pub fn new(
         cmd_rx: tokio::sync::mpsc::UnboundedReceiver<ClientCommand>,
         state_tx: tokio::sync::mpsc::UnboundedSender<StateMessage>,
-        radiant: Arc<Mutex<RadiantNode<K,C,R,M>>>,
+        radiant: Arc<Mutex<RadiantNode<K, C, R, M>>>,
     ) -> Self {
-
         tracing::trace!("Constructor for RadiantRpcClientHandler called");
         Self {
             cmd_rx,
@@ -56,7 +58,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
                     match v {
                         ClientCommand::PEER(/*RadiantMsg*/ msg) => {
                             tracing::trace!("RadiantRpcClientHandler: received peer message!");
-                          /*  match msg.msg.get_msg_type() {
+                            /*  match msg.msg.get_msg_type() {
                                 MessageType::MsgRequestVote => {
                                     tracing::trace!(
                                         "RadiantRpcClientHandler: request vote message!"
@@ -72,9 +74,7 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
                             tracing::trace!("RadiantRpcClientHandler: received herald message!");
                         }
                         ClientCommand::CTRL(/*CtrlHeraldMsg*/ msg) => {
-                            tracing::trace!(
-                                "RadiantRpcClientHandler: received bondsmith message!"
-                            );
+                            tracing::trace!("RadiantRpcClientHandler: received bondsmith message!");
                         }
                     }
                 }
@@ -174,7 +174,6 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
     }
 }
 
-
 pub async fn perform_handshake_async(
     client: &RadiantRpcClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -235,8 +234,6 @@ pub fn perform_handshake(
 
     Ok(res)
 }
-
-
 
 /*
 #[cfg(feature = "client_tests")]

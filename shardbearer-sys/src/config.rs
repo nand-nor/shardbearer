@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use shardbearer_core::MemberID;
 use shardbearer_core::consensus::{ConsensusCfg, ReplicationCfg};
+use shardbearer_core::MemberID;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -39,9 +39,9 @@ impl ShardbearerConfig {
         self.bootstrap_backoff
     }
 
-   // pub fn raft_cfg(&self) -> Config {
-   //     self.consensus_cfg.as_cfg()
-   // }
+    // pub fn raft_cfg(&self) -> Config {
+    //     self.consensus_cfg.as_cfg()
+    // }
 
     pub fn runtime_cfg(&self) -> RuntimeCfg {
         if let Some(rt) = &self.runtime {
@@ -61,10 +61,10 @@ impl ShardbearerConfig {
         self.consensus_cfg.heartbeat_interval()
     }
     //pub fn replication_max_bytes(&self) -> usize {
-   //     self.replication_cfg.replication_max_bytes()
-   // }
+    //     self.replication_cfg.replication_max_bytes()
+    // }
 
-  //  pub fn rep_cfg(&self)->Option<dyn ReplicationCfg>{
+    //  pub fn rep_cfg(&self)->Option<dyn ReplicationCfg>{
     //    self.replication_cfg
     //}
 }
