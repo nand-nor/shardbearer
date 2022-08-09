@@ -1,18 +1,9 @@
+use super::MemberID;
 use serde::{Deserialize, Serialize};
-use super::{GroupID, MemberID};
 
+pub trait ShardbearerConsensus {}
 
-
-
-pub trait ShardbearerConsensus {
-
-}
-
-pub trait ShardbearerReplication {
-
-}
-
-
+pub trait ShardbearerReplication {}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConsensusCfg {
@@ -32,21 +23,21 @@ impl ConsensusCfg {
         self.heartbeat_interval
     }
     //pub fn replication_max_bytes(&self) -> usize {
-     //   self.replication_max_bytes
+    //   self.replication_max_bytes
     //}
 }
 
 /// The `ReplicationCfg` trait is an optional configuration parameter that enables
 /// the use of additional params for setting up consensus/replication
 /// in a generic shardbearder system
-pub trait ReplicationCfg{//: Serialize + Deserialize + Clone  {
+pub trait ReplicationCfg {
+    //: Serialize + Deserialize + Clone  {
     type ConfigParams;
     type ReplicationLimits;
 
-    fn get_limits(&self)->Self::ReplicationLimits;
-    fn get_params(&self)->Self::ConfigParams;
+    fn get_limits(&self) -> Self::ReplicationLimits;
+    fn get_params(&self) -> Self::ConfigParams;
 }
-
 
 /// `DefaultReplicationCfg`: Example wrapper struct with parameters & replication
 /// limits similar to (but not a complete set) those used by raft
@@ -61,7 +52,7 @@ pub struct DefaultReplicationCfg {
 /// Example wrapper struct for simple config
 /// parameters (used in `DefaultReplicationCfg` struct)
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DefaultReplicationCfgParams{
+pub struct DefaultReplicationCfgParams {
     //multistage_commit: bool,
     role_prioritization: bool,
     broadcast_commits: bool,
@@ -70,7 +61,7 @@ pub struct DefaultReplicationCfgParams{
 /// Example wrapper struct for simple replication
 /// parameters (used in `DefaultReplicationCfg` struct)
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DefaultReplicationCfgLimits{
+pub struct DefaultReplicationCfgLimits {
     max_inflight_msgs: usize,
     max_bytes_per_msg: usize,
     replication_max_bytes: usize,
@@ -81,10 +72,10 @@ impl ReplicationCfg for DefaultReplicationCfg {
     type ConfigParams = DefaultReplicationCfgParams;
     type ReplicationLimits = DefaultReplicationCfgLimits;
 
-    fn get_limits(&self)->Self::ReplicationLimits{
+    fn get_limits(&self) -> Self::ReplicationLimits {
         self.limits.clone()
     }
-    fn get_params(&self)->Self::ConfigParams{
+    fn get_params(&self) -> Self::ConfigParams {
         self.params.clone()
     }
 }

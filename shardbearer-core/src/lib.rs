@@ -1,11 +1,14 @@
+#![allow(dead_code)] //just while features are still being implemented
+#![allow(unused_variables)] //^^
+#![allow(clippy::result_unit_err)] //need to open git issue to impl custom error types
+
+pub mod bondsmith;
 pub mod consensus;
 pub mod herald;
 pub mod order;
 pub mod radiant;
 pub mod shard;
-pub mod bondsmith;
 pub mod sys;
-
 
 #[derive(Clone)]
 pub enum RadiantRole {

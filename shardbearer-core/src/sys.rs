@@ -12,14 +12,8 @@ impl Default for SysState {
     }
 }
 
-pub trait RadiantSystem{
+pub trait RadiantSystem {}
 
-}
+pub trait HeraldSystem {}
 
-pub trait HeraldSystem{
-
-}
-
-pub trait ShardbearerSystem{
-
-}
+pub trait ShardbearerSystem {}

@@ -1,19 +1,18 @@
-use crate::shard::{Shard, ShardKey, ShardEntry, ShardAction, ShardGroupKey,ShardbearerMessage, ShardLoad};
-use crate::herald::{HeraldNode, Herald};
-use crate::bondsmith::{BondsmithNode, Bondsmith};
+use crate::bondsmith::{Bondsmith, BondsmithNode};
+use crate::herald::{Herald, HeraldNode};
+use crate::shard::{
+    /*ShardEntry,*/ ShardAction, ShardGroupKey, ShardKey, ShardLoad, ShardbearerMessage,
+};
 
+use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};
 use crate::order::OrderState;
 use crate::sys::SysState;
-use crate::consensus::{ShardbearerConsensus, ShardbearerReplication};
 
-use tokio::sync::mpsc::{UnboundedSender,UnboundedReceiver};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use indexmap::IndexMap;
-use tracing::{debug, error, info, trace, warn};
 
-use super::{Timestamp, GroupID, RadiantID, MemberID};
-
-
+use super::{GroupID, MemberID, RadiantID, Timestamp};
 
 #[derive(Clone, Hash, Debug, Eq, PartialEq)]
 pub struct RadiantKey {
@@ -44,8 +43,8 @@ pub trait Radiant: RadiantGroupMgmt + RadiantShardMgmt {
 
     //TODO make custom error types
     //fn send_group_broadcast(&mut self)->Result<(),()>;
-    fn full_reset(&mut self)->Result<(),()>;
-    fn soft_reset(&mut self)->Result<(),()>;
+    fn full_reset(&mut self) -> Result<(), ()>;
+    fn soft_reset(&mut self) -> Result<(), ()>;
 }
 
 /// The functional requirements represented by the `RadiantShardMgmt` trait is
@@ -64,27 +63,23 @@ pub trait RadiantShardMgmt {
 
     fn update_shard_list<A: ShardAction>(&mut self, action: A);
 
-   //     fn update_shard_list(&mut self, action: Self::ShardAction);
+    //     fn update_shard_list(&mut self, action: Self::ShardAction);
     fn set_watermark(&mut self, mark: Self::Watermark);
 
     //TODO make custom error types
     //evict all shard data
-    fn full_shard_reset(&mut self)->Result<(),()>;
+    fn full_shard_reset(&mut self) -> Result<(), ()>;
     //roll back to the last "good" state as determined by watermark
-    fn soft_shard_reset(&mut self)->Result<(),()>;
+    fn soft_shard_reset(&mut self) -> Result<(), ()>;
 }
 
-pub trait ShardWatermark {
-
-}
-
+pub trait ShardWatermark {}
 
 /// The functional requirements represented by the `RadiantGroupMgmt` trait is
 /// focused around maintaining accurate membership data within a shard group.
 /// Each `Radiant` will maintain a database of group members' relevant information
 /// (addresses, ports, id's, roles, etc.)
 pub trait RadiantGroupMgmt {
-
     type GroupId;
     type MemberId;
 
@@ -128,18 +123,21 @@ pub trait RadiantGroupMgmt {
     fn herald(&self) -> Option<Self::MemberId>;
     fn set_shard_group_herald(&mut self, mid: Self::MemberId);
 
-
     /// Can return `None` if we are in a state where no bondsmith is elected
     fn bondsmith(&self) -> Option<Self::MemberId>;
     fn set_bondsmith(&mut self, mid: Self::MemberId);
 
     //todo make custom error types
     ///evict all group membership data
-    fn group_reset(&mut self)->Result<(),()>;
+    fn group_reset(&mut self) -> Result<(), ()>;
 }
 
-
-pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> {
+pub struct RadiantNode<
+    K,
+    C: ShardbearerConsensus,
+    R: ShardbearerReplication,
+    M: ShardbearerMessage, /*+ ?Sized*/
+> {
     mid: MemberID,
     gid: GroupID,
     role: super::RadiantRole,
@@ -151,19 +149,17 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication, M:
     //to & from shard members. Open a port for each new/existing member
     shard_members_tx: IndexMap<MemberID, UnboundedSender<Box<M>>>,
     shard_members_rx: IndexMap<MemberID, UnboundedReceiver<Box<M>>>,
-/*
-    //Channels connecting one or more threads to ports opened up for comms
-    //to & from herald. Open a port for each new/existing member
-    shard_heralds_rx: IndexMap<MemberID, UnboundedReceiver<RadiantMsg>>,
-    shard_heralds_tx: IndexMap<MemberID, UnboundedSender<RadiantMsg>>,
+    /*
+        //Channels connecting one or more threads to ports opened up for comms
+        //to & from herald. Open a port for each new/existing member
+        shard_heralds_rx: IndexMap<MemberID, UnboundedReceiver<RadiantMsg>>,
+        shard_heralds_tx: IndexMap<MemberID, UnboundedSender<RadiantMsg>>,
 
-    //Channels connecting one or more threads to ports opened up for comms
-    //to & from bondsmith controllers. Open a port for each new/existing member
-    bondsmith_rx: UnboundedReceiver<RadiantMsg>,
-    bondsmith_tx: UnboundedSender<RadiantMsg>,
-*/
-
-
+        //Channels connecting one or more threads to ports opened up for comms
+        //to & from bondsmith controllers. Open a port for each new/existing member
+        bondsmith_rx: UnboundedReceiver<RadiantMsg>,
+        bondsmith_tx: UnboundedSender<RadiantMsg>,
+    */
     order_herald: MemberID,
     pub order_members: Vec<RadiantID>,
 
@@ -180,11 +176,15 @@ pub struct RadiantNode<K, C: ShardbearerConsensus, R: ShardbearerReplication, M:
     watermark: Timestamp,
 }
 
-impl ShardWatermark for Timestamp {
+impl ShardWatermark for Timestamp {}
 
-}
-
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantNode<K, C,R, M> {
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > RadiantNode<K, C, R, M>
+{
     pub fn default() -> Self {
         Self {
             mid: 0,
@@ -197,17 +197,16 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
 
             //Channels connecting one or more threads to ports opened up for comms
             //to & from herald. Open a port for each new/existing member
-          /*
+            /*
 
-            shard_heralds_rx: UnboundedReceiver::<RadiantMsg>::default(),
-            shard_heralds_tx: UnboundedSender::<RadiantMsg>::default(),
+                shard_heralds_rx: UnboundedReceiver::<RadiantMsg>::default(),
+                shard_heralds_tx: UnboundedSender::<RadiantMsg>::default(),
 
-            //Channels connecting one or more threads to ports opened up for comms
-            //to & from bondsmith controllers. Open a port for each new/existing member
-            bondsmith_rx: UnboundedReceiver::<RadiantMsg>::default(),
-            bondsmith_tx: UnboundedSender::<RadiantMsg>::default(),
-        */
-
+                //Channels connecting one or more threads to ports opened up for comms
+                //to & from bondsmith controllers. Open a port for each new/existing member
+                bondsmith_rx: UnboundedReceiver::<RadiantMsg>::default(),
+                bondsmith_tx: UnboundedSender::<RadiantMsg>::default(),
+            */
             order_herald: 0,
             order_members: Vec::new(),
             shards: IndexMap::new(),
@@ -219,15 +218,19 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
         }
     }
 
-   // pub fn set_cfg(&mut self, cfg: &ShardbearerConfig) {
+    // pub fn set_cfg(&mut self, cfg: &ShardbearerConfig) {
     //    self.mid = cfg.id();
-        //todo
+    //todo
     //}
 }
 
-
-
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Radiant for RadiantNode<K, C,R, M>{
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > Radiant for RadiantNode<K, C, R, M>
+{
     type Role = super::RadiantRole;
 
     fn set_role(&mut self, role: Self::Role) {
@@ -256,40 +259,49 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessa
 
     //TODO make custom error types
     //fn send_group_broadcast(&mut self)->Result<(),()>;
-    fn full_reset(&mut self)->Result<(),()>{
+    fn full_reset(&mut self) -> Result<(), ()> {
         Ok(())
     }
-    fn soft_reset(&mut self)->Result<(),()>{
+    fn soft_reset(&mut self) -> Result<(), ()> {
         Ok(())
     }
 }
 
-
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantShardMgmt for RadiantNode<K, C,R, M> {
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > RadiantShardMgmt for RadiantNode<K, C, R, M>
+{
     type Watermark = Timestamp;
 
-    fn update_shard_list<A: ShardAction>(&mut self, action: A){
+    fn update_shard_list<A: ShardAction>(&mut self, action: A) {
         unimplemented!();
     }
 
-    fn set_watermark(&mut self, mark: Self::Watermark){
+    fn set_watermark(&mut self, mark: Self::Watermark) {
         unimplemented!();
     }
 
     //TODO make custom error types
     //evict all shard data
-    fn full_shard_reset(&mut self)->Result<(),()>{
+    fn full_shard_reset(&mut self) -> Result<(), ()> {
         Ok(())
     }
     //roll back to the last "good" state as determined by watermark
-    fn soft_shard_reset(&mut self)->Result<(),()>{
+    fn soft_shard_reset(&mut self) -> Result<(), ()> {
         Ok(())
     }
 }
 
-
-impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantGroupMgmt for RadiantNode<K, C,R, M>{
-
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > RadiantGroupMgmt for RadiantNode<K, C, R, M>
+{
     type GroupId = GroupID;
     type MemberId = MemberID;
 
@@ -330,8 +342,7 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessa
         member_data: Self::HeraldMemberListType,
         tx: Self::HeraldMemberDataTx,
         rx: Self::HeraldMemberDataRx,
-    ) -> Result<(), ()>{
-
+    ) -> Result<(), ()> {
         self.hsvc.herald_peers_tx.entry(mid).or_insert(tx);
         self.hsvc.herald_peers_rx.entry(mid).or_insert(rx);
         //self.order_members.push(member_data);
@@ -342,40 +353,38 @@ impl <K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessa
         &mut self,
         mid: Self::MemberId,
         member_data: Self::HeraldMemberListType,
-    ) -> Result<Self::MemberId, ()>{
-
+    ) -> Result<Self::MemberId, ()> {
         //Ok(0)
         unimplemented!();
     }
 
     /// Can return `None` if we are in a state where no herald is elected
-    fn herald(&self) -> Option<Self::MemberId>{
-
+    fn herald(&self) -> Option<Self::MemberId> {
         None
     }
 
-    fn set_shard_group_herald(&mut self, _mid: Self::MemberId){
-
-    }
-
+    fn set_shard_group_herald(&mut self, _mid: Self::MemberId) {}
 
     /// Can return `None` if we are in a state where no bondsmith is elected
-    fn bondsmith(&self) -> Option<Self::MemberId>{
+    fn bondsmith(&self) -> Option<Self::MemberId> {
         None
     }
-    fn set_bondsmith(&mut self, _mid: Self::MemberId){
-
-    }
+    fn set_bondsmith(&mut self, _mid: Self::MemberId) {}
 
     //todo make custom error types
     ///evict all group membership data
-    fn group_reset(&mut self)->Result<(),()>{
+    fn group_reset(&mut self) -> Result<(), ()> {
         Ok(())
     }
 }
 
-
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> RadiantStateMachine for RadiantNode<K, C,R, M> {
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > RadiantStateMachine for RadiantNode<K, C, R, M>
+{
     type RadiantState = RadiantState;
     type SystemState = SysState;
     type ClusterState = OrderState;
@@ -402,50 +411,65 @@ impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessag
     }
 
     fn update_system_state(&mut self, state: Self::SystemState) {
-       // self.sys.update_state(state)
+        // self.sys.update_state(state)
         unimplemented!()
     }
 
     fn system_state(&self) -> Self::SystemState {
         //self.sys.report_state()
         unimplemented!()
-
     }
 }
 
-
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Herald for RadiantNode<K, C,R, M> {
-
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > Herald for RadiantNode<K, C, R, M>
+{
     type ShardKeyType = K;
     type MapKeyType = usize;
 
     //TODO need error handling-- return err if the key is already in the map
-    fn add_new_key_mapping(&mut self, map_key: Self::MapKeyType, shard_key: Self::ShardKeyType)->Result<(),()>{
-
-        self.hsvc.shard_key_mapping.entry(map_key).or_insert(shard_key);
+    fn add_new_key_mapping(
+        &mut self,
+        map_key: Self::MapKeyType,
+        shard_key: Self::ShardKeyType,
+    ) -> Result<(), ()> {
+        self.hsvc
+            .shard_key_mapping
+            .entry(map_key)
+            .or_insert(shard_key);
         Ok(())
     }
-
 }
 
-impl<K, C: ShardbearerConsensus, R: ShardbearerReplication, M: ShardbearerMessage /*+ ?Sized*/> Bondsmith for RadiantNode<K, C,R, M> {
+impl<
+        K,
+        C: ShardbearerConsensus,
+        R: ShardbearerReplication,
+        M: ShardbearerMessage, /*+ ?Sized*/
+    > Bondsmith for RadiantNode<K, C, R, M>
+{
     type ShardKeyMapType = ShardKey;
     type GroupKeyType = GroupID;
     type ShardLoadTracker = ShardLoad;
 
-    fn add_new_key_mapping(&mut self, group_key: Self::GroupKeyType, shard_key: Self::ShardKeyMapType)->Result<(),()>{
+    fn add_new_key_mapping(
+        &mut self,
+        group_key: Self::GroupKeyType,
+        shard_key: Self::ShardKeyMapType,
+    ) -> Result<(), ()> {
         // self.
         unimplemented!();
     }
-    fn get_current_shard_load(&self, group_id: Self::GroupKeyType) -> Self::ShardLoadTracker{
+    fn get_current_shard_load(&self, group_id: Self::GroupKeyType) -> Self::ShardLoadTracker {
         unimplemented!();
     }
-    fn adjust_shard_load(&mut self, added: Self::ShardLoadTracker, group_id: Self::GroupKeyType){
+    fn adjust_shard_load(&mut self, added: Self::ShardLoadTracker, group_id: Self::GroupKeyType) {
         unimplemented!();
-
     }
-
-
 }
 
 //use std::error::Error;
@@ -456,7 +480,7 @@ pub enum RadiantState {
     RESET,
     UNASSOCIATED,
     ASSOCIATED,
-    LOCKED,     //replicating, voting, or performing some op that requires atomicity
+    LOCKED, //replicating, voting, or performing some op that requires atomicity
     ERROR(RadiantStateError),
 }
 
@@ -472,7 +496,6 @@ impl Default for RadiantState {
         RadiantState::UNASSOCIATED
     }
 }
-
 
 pub trait RadiantStateMachine {
     type RadiantState;

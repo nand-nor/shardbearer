@@ -1,5 +1,5 @@
-use crate::shard::{Shard, ShardKey, ShardKeyType};
-use std::convert::TryFrom;
+#![allow(non_camel_case_types)] //someday I will forget all the bad things C taught me
+use crate::shard::ShardKeyType;
 
 use std::boxed::Box;
 
@@ -12,8 +12,7 @@ pub enum OrderShardAction<K: ShardKeyType> {
     REMOVE(Box<K>),
     CONFIRM(Box<K>),
     COMMIT_P1(Box<K>),
-    COMMIT_P2(Box<K>)
-    //TIMESTAMP((dyn ShardKey, Timestamp))
+    COMMIT_P2(Box<K>), //TIMESTAMP((dyn ShardKey, Timestamp))
 }
 
 impl<K: ShardKeyType> Default for OrderShardAction<K> {
@@ -22,13 +21,12 @@ impl<K: ShardKeyType> Default for OrderShardAction<K> {
     }
 }
 
-
 #[derive(Clone)]
 pub enum OrderState {
-    BOOTSTRAP,  //nodes are still setting up the system, have no state info yet
-    RESET,      //reset, reconfiguration, or recovery in process
-    ACTIVE,     //nodes are set up, all info complete (Roles, shard services, etc.), order is not currently performing an operation
-    LOCKED(OrderStateOp),  //Order is locked for some operation
+    BOOTSTRAP,              //nodes are still setting up the system, have no state info yet
+    RESET,                  //reset, reconfiguration, or recovery in process
+    ACTIVE, //nodes are set up, all info complete (Roles, shard services, etc.), order is not currently performing an operation
+    LOCKED(OrderStateOp), //Order is locked for some operation
     ERROR(OrderStateError), //Order is in error state
 }
 /// Used to return information if a requesting node in the system gets a message back
@@ -36,11 +34,10 @@ pub enum OrderState {
 #[derive(Clone)]
 pub enum OrderStateOp {
     MEMBERSHIP_UPDATE, //adding a new node to the order
-    MEMBERSHIP_SET,    //establishing entirely new membership group (during bootstrap or subsequent resets)
+    MEMBERSHIP_SET, //establishing entirely new membership group (during bootstrap or subsequent resets)
     REPLICATING,
     VOTING,
-    PROBE,              //order is being probed to ensure all order members up and responsive
-
+    PROBE, //order is being probed to ensure all order members up and responsive
 }
 /// OrderError Enum
 /// Indicates the current error at the order level, used to determine if an order-wide
@@ -65,7 +62,7 @@ pub enum OrderStateOp {
 /// # recoverability
 ///
 #[derive(Clone)]
-pub enum OrderStateError{
+pub enum OrderStateError {
     RECOVERABLE_STATE,
     RECOVERABLE_MEMBERSHIP,
     RECOVERABLE_SHARD,
