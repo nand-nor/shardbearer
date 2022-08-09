@@ -1,13 +1,57 @@
+#![allow(dead_code)] //just while features are still being implemented
+#![allow(unused_variables)] //^^
+#![allow(clippy::result_unit_err)] //need to open git issue to impl custom error types
+
+pub mod bondsmith;
+pub mod consensus;
 pub mod herald;
-pub mod cluster;
 pub mod order;
 pub mod radiant;
-pub mod raft;
 pub mod shard;
-pub mod system;
+pub mod sys;
 
-#[macro_use]
-extern crate slog;
-extern crate slog_async;
-extern crate slog_term;
+#[derive(Clone)]
+pub enum RadiantRole {
+    UNASSOCIATED,
+    MEMBER(OrderRole),
+}
 
+impl Default for RadiantRole {
+    fn default() -> Self {
+        RadiantRole::UNASSOCIATED
+    }
+}
+
+#[derive(Clone)]
+pub enum OrderRole {
+    VOTER,
+    HERALD(HeraldRole),
+}
+
+impl Default for OrderRole {
+    fn default() -> Self {
+        OrderRole::VOTER
+    }
+}
+
+#[derive(Clone)]
+pub enum HeraldRole {
+    VOTER,
+    BONDSMITH,
+}
+
+impl Default for HeraldRole {
+    fn default() -> Self {
+        HeraldRole::VOTER
+    }
+}
+
+pub type MemberID = u64;
+pub type GroupID = u64;
+pub type RadiantID = u64;
+
+#[derive(Default)]
+pub struct Timestamp {
+    seconds: u64,
+    nanos: u32,
+}

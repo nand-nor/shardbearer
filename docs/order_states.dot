@@ -1,0 +1,18 @@
+// Order State Machine
+digraph {
+	0 [label=BOOTSTRAP]
+	1 [label=RESET]
+	4 [label=ERROR]
+	2 [label=ACTIVE]
+	3 [label=LOCKED]
+	0 -> 1
+	4 -> 1
+	1 -> 3
+	3 -> 2
+	2 -> 3
+	3 -> 4
+	1 -> 4
+	4 -> 4
+	2 -> 4
+	0 -> 4
+}

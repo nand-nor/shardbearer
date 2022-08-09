@@ -5,4 +5,8 @@ import "common.proto";
 // Interface exported by the server.
 service HeraldRPC {
   rpc HeraldVote(Radiant)returns (Roles){}
+      rpc MoveShardRequest(ShardMoveRequest) returns (ShardMoveRequestResponse){}
+
+    rpc JoinSystem(Radiant)returns (ConfigSummary){}
+    rpc LeaveSystem(Radiant)returns (ConfigSummary){}
 }
